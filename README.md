@@ -1,5 +1,7 @@
 # Krites
 
+![Krites](media/krites.png)
+
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat&logo=go)](https://go.dev)
 [![License: Unlicense](https://img.shields.io/badge/License-Unlicense-blue.svg)](LICENSE)
 
