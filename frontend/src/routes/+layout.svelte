@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import Toast from '$lib/components/Toast.svelte';
+	import { LayoutDashboardIcon, FolderOpenIcon, PlayIcon, BarChart3Icon, FlaskConicalIcon } from '@lucide/svelte';
 
 	let { children } = $props();
 </script>
@@ -9,107 +10,34 @@
 	<title>Krites</title>
 </svelte:head>
 
-<div class="app">
-	<aside class="sidebar">
-		<div class="logo">
-			<span class="logo-icon">&#9881;</span>
-			<h1>Krites</h1>
+<div class="flex min-h-screen">
+	<aside class="w-60 min-w-60 bg-bg-elevated border-r border-border py-6 px-4 flex flex-col gap-8">
+		<div class="flex items-center gap-2.5 px-2">
+			<FlaskConicalIcon size={22} color="var(--color-accent)" />
+			<h1 class="text-lg font-bold text-text tracking-[-0.03em]">Krites</h1>
 		</div>
-		<nav>
-			<a href="/" class="nav-link">
-				<span class="nav-icon">&#9632;</span>
+		<nav class="flex flex-col gap-1">
+			<a href="/" class="flex items-center gap-3 px-4 py-3.5 rounded-[--radius] text-text-muted text-lg font-medium transition-all duration-150 hover:text-text hover:bg-bg-card">
+				<LayoutDashboardIcon size={20} />
 				Dashboard
 			</a>
-			<a href="/suites" class="nav-link">
-				<span class="nav-icon">&#9654;</span>
+			<a href="/suites" class="flex items-center gap-3 px-4 py-3.5 rounded-[--radius] text-text-muted text-lg font-medium transition-all duration-150 hover:text-text hover:bg-bg-card">
+				<FolderOpenIcon size={20} />
 				Suites
 			</a>
-			<a href="/runs" class="nav-link">
-				<span class="nav-icon">&#9200;</span>
+			<a href="/runs" class="flex items-center gap-3 px-4 py-3.5 rounded-[--radius] text-text-muted text-lg font-medium transition-all duration-150 hover:text-text hover:bg-bg-card">
+				<PlayIcon size={20} />
 				Runs
 			</a>
-			<a href="/analytics" class="nav-link">
-				<span class="nav-icon">&#9733;</span>
+			<a href="/analytics" class="flex items-center gap-3 px-4 py-3.5 rounded-[--radius] text-text-muted text-lg font-medium transition-all duration-150 hover:text-text hover:bg-bg-card">
+				<BarChart3Icon size={20} />
 				Analytics
 			</a>
 		</nav>
 	</aside>
-	<main class="content">
+	<main class="flex-1 py-8 px-10 overflow-y-auto">
 		{@render children()}
 	</main>
 </div>
 
 <Toast />
-
-<style>
-	.app {
-		display: flex;
-		min-height: 100vh;
-	}
-
-	.sidebar {
-		width: 240px;
-		min-width: 240px;
-		background: var(--color-bg-elevated);
-		border-right: 1px solid var(--color-border);
-		padding: 24px 16px;
-		display: flex;
-		flex-direction: column;
-		gap: 32px;
-	}
-
-	.logo {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		padding: 0 8px;
-	}
-
-	.logo-icon {
-		font-size: 20px;
-		color: var(--color-accent);
-	}
-
-	.logo h1 {
-		font-size: 16px;
-		font-weight: 700;
-		color: var(--color-text);
-		letter-spacing: -0.03em;
-	}
-
-	nav {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.nav-link {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		padding: 10px 12px;
-		border-radius: var(--radius);
-		color: var(--color-text-muted);
-		font-size: 14px;
-		font-weight: 500;
-		transition: all 0.15s ease;
-	}
-
-	.nav-link:hover {
-		color: var(--color-text);
-		background: var(--color-bg-card);
-	}
-
-
-	.nav-icon {
-		font-size: 12px;
-		width: 20px;
-		text-align: center;
-	}
-
-	.content {
-		flex: 1;
-		padding: 32px 40px;
-		overflow-y: auto;
-	}
-</style>

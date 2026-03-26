@@ -70,67 +70,69 @@
 	const sortedStats = $derived(sortStats(modelStats));
 </script>
 
-<div class="page">
-	<h1>Analytics</h1>
-	<p class="subtitle">Model comparisons across all runs</p>
+<div>
+	<h1 class="text-3xl mb-1">Analytics</h1>
+	<p class="text-text-muted mb-8">Model comparisons across all runs</p>
 
 	{#if loading}
-		<p class="loading">Loading analytics...</p>
+		<p class="text-text-muted">Loading analytics...</p>
 	{:else if error}
-		<div class="error-banner">{error}</div>
+		<div class="bg-error/10 border border-error text-error px-4 py-3 rounded-[--radius]">{error}</div>
 	{:else if overview}
-		<div class="stats">
-			<div class="stat-card card">
-				<span class="stat-value mono">{overview.total_runs}</span>
-				<span class="stat-label">Total Runs</span>
+		<div class="grid grid-cols-3 gap-4 mb-10">
+			<div class="card flex flex-col gap-1 text-center p-6">
+				<span class="text-3xl font-bold text-accent mono">{overview.total_runs}</span>
+				<span class="text-sm text-text-muted uppercase tracking-wide">Total Runs</span>
 			</div>
-			<div class="stat-card card">
-				<span class="stat-value mono">{overview.completed_runs}</span>
-				<span class="stat-label">Completed</span>
+			<div class="card flex flex-col gap-1 text-center p-6">
+				<span class="text-3xl font-bold text-accent mono">{overview.completed_runs}</span>
+				<span class="text-sm text-text-muted uppercase tracking-wide">Completed</span>
 			</div>
-			<div class="stat-card card">
-				<span class="stat-value mono">{overview.total_results}</span>
-				<span class="stat-label">Results</span>
+			<div class="card flex flex-col gap-1 text-center p-6">
+				<span class="text-3xl font-bold text-accent mono">{overview.total_results}</span>
+				<span class="text-sm text-text-muted uppercase tracking-wide">Results</span>
 			</div>
-			<div class="stat-card card">
-				<span class="stat-value mono">{overview.distinct_models}</span>
-				<span class="stat-label">Models</span>
+			<div class="card flex flex-col gap-1 text-center p-6">
+				<span class="text-3xl font-bold text-accent mono">{overview.distinct_models}</span>
+				<span class="text-sm text-text-muted uppercase tracking-wide">Models</span>
 			</div>
-			<div class="stat-card card">
-				<span class="stat-value mono">{formatCost(overview.total_cost)}</span>
-				<span class="stat-label">Total Cost</span>
+			<div class="card flex flex-col gap-1 text-center p-6">
+				<span class="text-3xl font-bold text-accent mono">{formatCost(overview.total_cost)}</span>
+				<span class="text-sm text-text-muted uppercase tracking-wide">Total Cost</span>
 			</div>
-			<div class="stat-card card">
-				<span class="stat-value mono">{overview.avg_latency_ms.toFixed(0)} ms</span>
-				<span class="stat-label">Avg Latency</span>
+			<div class="card flex flex-col gap-1 text-center p-6">
+				<span class="text-3xl font-bold text-accent mono">{overview.avg_latency_ms.toFixed(0)} ms</span>
+				<span class="text-sm text-text-muted uppercase tracking-wide">Avg Latency</span>
 			</div>
 		</div>
 
 		{#if modelStats.length > 0}
-			<section class="section">
-				<h2>Model Comparison</h2>
-				<div class="chart-container card">
-					<ModelComparisonChart stats={modelStats} />
+			<section class="mb-10">
+				<h2 class="text-xl mb-4">Model Comparison</h2>
+				<div class="card p-5 h-[300px] flex flex-col">
+					<div class="flex-1 min-h-0">
+						<ModelComparisonChart stats={modelStats} />
+					</div>
 				</div>
 
-				<div class="table-container card">
-					<table>
+				<div class="card mt-4 overflow-x-auto">
+					<table class="w-full border-collapse text-[15px]">
 						<thead>
-							<tr>
-								<th>Modell</th>
-								<th class="sortable" onclick={() => toggleSort('run_count')}>
+							<tr class="border-b border-border">
+								<th class="text-left px-3 py-2.5 text-text-muted font-medium text-sm uppercase tracking-wide">Modell</th>
+								<th class="text-left px-3 py-2.5 text-text-muted font-medium text-sm uppercase tracking-wide cursor-pointer select-none hover:text-accent" onclick={() => toggleSort('run_count')}>
 									Runs {sortKey === 'run_count' ? (sortAsc ? '▲' : '▼') : ''}
 								</th>
-								<th class="sortable" onclick={() => toggleSort('avg_latency_ms')}>
+								<th class="text-left px-3 py-2.5 text-text-muted font-medium text-sm uppercase tracking-wide cursor-pointer select-none hover:text-accent" onclick={() => toggleSort('avg_latency_ms')}>
 									Avg Latency {sortKey === 'avg_latency_ms' ? (sortAsc ? '▲' : '▼') : ''}
 								</th>
-								<th class="sortable" onclick={() => toggleSort('avg_tps')}>
+								<th class="text-left px-3 py-2.5 text-text-muted font-medium text-sm uppercase tracking-wide cursor-pointer select-none hover:text-accent" onclick={() => toggleSort('avg_tps')}>
 									Avg tok/s {sortKey === 'avg_tps' ? (sortAsc ? '▲' : '▼') : ''}
 								</th>
-								<th class="sortable" onclick={() => toggleSort('total_cost')}>
+								<th class="text-left px-3 py-2.5 text-text-muted font-medium text-sm uppercase tracking-wide cursor-pointer select-none hover:text-accent" onclick={() => toggleSort('total_cost')}>
 									Cost {sortKey === 'total_cost' ? (sortAsc ? '▲' : '▼') : ''}
 								</th>
-								<th class="sortable" onclick={() => toggleSort('avg_success_rate')}>
+								<th class="text-left px-3 py-2.5 text-text-muted font-medium text-sm uppercase tracking-wide cursor-pointer select-none hover:text-accent" onclick={() => toggleSort('avg_success_rate')}>
 									Success {sortKey === 'avg_success_rate' ? (sortAsc ? '▲' : '▼') : ''}
 								</th>
 							</tr>
@@ -138,12 +140,12 @@
 						<tbody>
 							{#each sortedStats as stat}
 								<tr>
-									<td class="mono">{stat.model}</td>
-									<td class="mono">{stat.run_count}</td>
-									<td class="mono">{stat.avg_latency_ms.toFixed(0)} ms</td>
-									<td class="mono">{stat.avg_tokens_per_second.toFixed(1)}</td>
-									<td class="mono">{formatCost(stat.total_cost)}</td>
-									<td class="mono">{(stat.avg_success_rate * 100).toFixed(0)}%</td>
+									<td class="px-3 py-2.5 border-t border-border mono">{stat.model}</td>
+									<td class="px-3 py-2.5 border-t border-border mono">{stat.run_count}</td>
+									<td class="px-3 py-2.5 border-t border-border mono">{stat.avg_latency_ms.toFixed(0)} ms</td>
+									<td class="px-3 py-2.5 border-t border-border mono">{stat.avg_tokens_per_second.toFixed(1)}</td>
+									<td class="px-3 py-2.5 border-t border-border mono">{formatCost(stat.total_cost)}</td>
+									<td class="px-3 py-2.5 border-t border-border mono">{(stat.avg_success_rate * 100).toFixed(0)}%</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -151,211 +153,46 @@
 				</div>
 			</section>
 
-			<section class="section">
-				<h2>Performance Trend</h2>
-				<div class="trend-controls">
-					<select bind:value={selectedModel} onchange={loadTrends}>
+			<section class="mb-10">
+				<h2 class="text-xl mb-4">Performance Trend</h2>
+				<div class="flex items-center gap-4 mb-4">
+					<select class="bg-bg-input border border-border rounded-[--radius] text-text px-3 py-2 text-[15px] font-mono" bind:value={selectedModel} onchange={loadTrends}>
 						{#each distinctModels as model}
 							<option value={model}>{model}</option>
 						{/each}
 					</select>
-					<div class="metric-toggle">
-						<button class:active={trendMetric === 'latency'} onclick={() => (trendMetric = 'latency')}>
+					<div class="flex border border-border rounded-[--radius] overflow-hidden">
+						<button
+							class="border-none px-4 py-2 text-sm cursor-pointer transition-all duration-150 {trendMetric === 'latency' ? 'bg-accent text-bg font-semibold' : 'bg-bg-input text-text-muted'}"
+							onclick={() => (trendMetric = 'latency')}
+						>
 							Latency
 						</button>
-						<button class:active={trendMetric === 'tps'} onclick={() => (trendMetric = 'tps')}>
+						<button
+							class="border-none px-4 py-2 text-sm cursor-pointer transition-all duration-150 {trendMetric === 'tps' ? 'bg-accent text-bg font-semibold' : 'bg-bg-input text-text-muted'}"
+							onclick={() => (trendMetric = 'tps')}
+						>
 							tok/s
 						</button>
 					</div>
 				</div>
 				{#if trends.length > 0}
-					<div class="chart-container card">
+					<div class="card p-5 h-[300px] flex flex-col">
 						{#key `${selectedModel}-${trendMetric}`}
-							<TrendLineChart {trends} metric={trendMetric} />
+							<div class="flex-1 min-h-0">
+								<TrendLineChart {trends} metric={trendMetric} />
+							</div>
 						{/key}
 					</div>
 				{:else}
-					<p class="empty">No trend data for this model</p>
+					<p class="text-text-muted text-base py-5">No trend data for this model</p>
 				{/if}
 			</section>
 		{:else}
-			<div class="empty-state card">
-				<p>No benchmark data yet.</p>
+			<div class="card text-center py-12">
+				<p class="text-text-muted mb-4">No benchmark data yet.</p>
 				<a href="/suites" class="btn btn-primary">Create First Suite</a>
 			</div>
 		{/if}
 	{/if}
 </div>
-
-<style>
-	.page {
-		max-width: 1400px;
-	}
-
-	h1 {
-		font-size: 28px;
-		margin-bottom: 4px;
-	}
-
-	.subtitle {
-		color: var(--color-text-muted);
-		margin-bottom: 32px;
-	}
-
-	.stats {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 16px;
-		margin-bottom: 40px;
-	}
-
-	.stat-card {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		text-align: center;
-		padding: 24px;
-	}
-
-	.stat-value {
-		font-size: 28px;
-		font-weight: 700;
-		color: var(--color-accent);
-	}
-
-	.stat-label {
-		font-size: 12px;
-		color: var(--color-text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.section {
-		margin-bottom: 40px;
-	}
-
-	.section h2 {
-		font-size: 18px;
-		margin-bottom: 16px;
-	}
-
-	.chart-container {
-		padding: 20px;
-		height: 300px;
-		display: flex;
-		flex-direction: column;
-	}
-
-	.chart-container :global(.chart-wrapper) {
-		flex: 1;
-		min-height: 0;
-	}
-
-	.table-container {
-		margin-top: 16px;
-		overflow-x: auto;
-	}
-
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: 13px;
-	}
-
-	thead {
-		border-bottom: 1px solid var(--color-border);
-	}
-
-	th {
-		text-align: left;
-		padding: 10px 12px;
-		color: var(--color-text-muted);
-		font-weight: 500;
-		font-size: 11px;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	th.sortable {
-		cursor: pointer;
-		user-select: none;
-	}
-
-	th.sortable:hover {
-		color: var(--color-accent);
-	}
-
-	td {
-		padding: 10px 12px;
-		border-top: 1px solid var(--color-border);
-	}
-
-	.trend-controls {
-		display: flex;
-		align-items: center;
-		gap: 16px;
-		margin-bottom: 16px;
-	}
-
-	select {
-		background: var(--color-input);
-		border: 1px solid var(--color-border);
-		border-radius: 8px;
-		color: var(--color-text);
-		padding: 8px 12px;
-		font-size: 13px;
-		font-family: 'JetBrains Mono', monospace;
-	}
-
-	.metric-toggle {
-		display: flex;
-		gap: 0;
-		border: 1px solid var(--color-border);
-		border-radius: 8px;
-		overflow: hidden;
-	}
-
-	.metric-toggle button {
-		background: var(--color-input);
-		border: none;
-		color: var(--color-text-muted);
-		padding: 8px 16px;
-		font-size: 12px;
-		cursor: pointer;
-		transition: all 0.15s ease;
-	}
-
-	.metric-toggle button.active {
-		background: var(--color-accent);
-		color: var(--color-bg);
-		font-weight: 600;
-	}
-
-	.empty {
-		color: var(--color-text-muted);
-		font-size: 14px;
-		padding: 20px 0;
-	}
-
-	.empty-state {
-		text-align: center;
-		padding: 48px;
-	}
-
-	.empty-state p {
-		color: var(--color-text-muted);
-		margin-bottom: 16px;
-	}
-
-	.loading {
-		color: var(--color-text-muted);
-	}
-
-	.error-banner {
-		background: rgba(248, 113, 113, 0.1);
-		border: 1px solid var(--color-error);
-		color: var(--color-error);
-		padding: 12px 16px;
-		border-radius: 8px;
-	}
-</style>

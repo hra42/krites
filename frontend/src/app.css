@@ -1,7 +1,11 @@
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/utilities' layer(utilities);
 @import '@fontsource/jetbrains-mono';
 @import '@fontsource/outfit';
 
-:root {
+@source "../node_modules/layerchart/**/*.{svelte,js}";
+
+@theme {
 	--color-bg: #0c0b0e;
 	--color-bg-elevated: #16141a;
 	--color-bg-card: #1e1c23;
@@ -15,7 +19,11 @@
 	--color-accent-hover: #c4b5fd;
 	--color-accent-bg: rgba(167, 139, 250, 0.1);
 	--color-success: #34d399;
+	--color-success-bg: #065f46;
+	--color-success-text: #d1fae5;
 	--color-error: #f87171;
+	--color-error-bg: #7f1d1d;
+	--color-error-text: #fecaca;
 	--color-warning: #fbbf24;
 	--font-display: 'Outfit', sans-serif;
 	--font-mono: 'JetBrains Mono', monospace;
@@ -23,148 +31,126 @@
 	--radius: 8px;
 	--radius-sm: 4px;
 	--radius-lg: 12px;
+
+	/* Chart model colors */
+	--color-model-0: #a78bfa;
+	--color-model-1: #34d399;
+	--color-model-2: #fbbf24;
+	--color-model-3: #f87171;
+	--color-model-4: #38bdf8;
+	--color-model-5: #fb923c;
+	--color-model-6: #a3e635;
+	--color-model-7: #e879f9;
 }
 
-*,
-*::before,
-*::after {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
+/* layerchart surface variables for dark theme */
+:root {
+	--color-surface-100: #1e1c23;
+	--color-surface-200: #2a2830;
+	--color-surface-300: #2a2830;
+	--color-surface-content: #8b8894;
 }
 
-body {
-	background: var(--color-bg);
-	color: var(--color-text);
-	font-family: var(--font-body);
-	font-size: 14px;
-	line-height: 1.5;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
+@layer base {
+	body {
+		background: var(--color-bg);
+		color: var(--color-text);
+		font-family: var(--font-body);
+		font-size: 16px;
+		line-height: 1.5;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
 
-h1,
-h2,
-h3,
-h4 {
-	font-family: var(--font-display);
-	font-weight: 600;
-	letter-spacing: -0.02em;
-}
+	h1,
+	h2,
+	h3,
+	h4 {
+		font-family: var(--font-display);
+		font-weight: 600;
+		letter-spacing: -0.02em;
+	}
 
-a {
-	color: var(--color-accent);
-	text-decoration: none;
-}
+	a {
+		color: var(--color-accent);
+		text-decoration: none;
+	}
 
-a:hover {
-	color: var(--color-accent-hover);
-}
+	a:hover {
+		color: var(--color-accent-hover);
+	}
 
-button {
-	font-family: var(--font-body);
-	cursor: pointer;
-}
+	button {
+		font-family: var(--font-body);
+		cursor: pointer;
+	}
 
-input,
-textarea,
-select {
-	font-family: var(--font-body);
-	font-size: 14px;
+	input,
+	textarea,
+	select {
+		font-family: var(--font-body);
+		font-size: 16px;
+	}
 }
 
 .mono {
-	font-family: var(--font-mono);
-	font-size: 13px;
+	@apply font-mono text-[15px];
 }
 
 .btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 8px 16px;
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius);
-	background: var(--color-bg-card);
-	color: var(--color-text);
-	font-size: 13px;
-	font-weight: 500;
-	transition: all 0.15s ease;
+	@apply inline-flex items-center gap-2 px-5 py-2.5 border border-border rounded-[--radius] bg-bg-card text-text text-[15px] font-medium transition-all duration-150 ease-in-out;
 }
 
 .btn:hover {
-	border-color: var(--color-text-muted);
-	background: var(--color-bg-elevated);
+	@apply border-text-muted bg-bg-elevated;
 }
 
 .btn-primary {
-	background: var(--color-accent);
-	border-color: var(--color-accent);
-	color: #0c0b0e;
+	@apply bg-accent border-accent text-bg;
 }
 
 .btn-primary:hover {
-	background: var(--color-accent-hover);
-	border-color: var(--color-accent-hover);
+	@apply bg-accent-hover border-accent-hover;
 }
 
 .btn-danger {
-	color: var(--color-error);
-	border-color: var(--color-error);
+	@apply text-error border-error;
 }
 
 .btn-danger:hover {
-	background: rgba(248, 113, 113, 0.1);
+	@apply bg-error/10;
 }
 
 .btn:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
+	@apply opacity-50 cursor-not-allowed;
 }
 
 .input {
-	width: 100%;
-	padding: 8px 12px;
-	background: var(--color-bg-input);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius);
-	color: var(--color-text);
-	outline: none;
-	transition: border-color 0.15s ease;
+	@apply w-full px-4 py-2.5 bg-bg-input border border-border rounded-[--radius] text-text text-base outline-none transition-[border-color] duration-150 ease-in-out;
 }
 
 .input:focus {
-	border-color: var(--color-border-focus);
+	@apply border-border-focus;
 }
 
 .input::placeholder {
-	color: var(--color-text-dim);
+	@apply text-text-dim;
 }
 
 textarea.input {
-	resize: vertical;
-	min-height: 80px;
+	@apply resize-y min-h-20;
 }
 
 .label {
-	display: block;
-	margin-bottom: 4px;
-	font-size: 12px;
-	font-weight: 500;
-	color: var(--color-text-muted);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	@apply block mb-1.5 text-sm font-medium text-text-muted uppercase tracking-wide;
 }
 
 .card {
-	background: var(--color-bg-card);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-lg);
-	padding: 20px;
+	@apply bg-bg-card border border-border rounded-[--radius-lg] p-5;
 }
 
 .card:hover {
-	border-color: var(--color-text-dim);
+	@apply border-text-dim;
 }
 
 @keyframes fadeIn {

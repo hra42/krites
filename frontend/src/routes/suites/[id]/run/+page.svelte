@@ -80,75 +80,75 @@
 	}
 </script>
 
-<div class="page">
-	<a href="/suites/{data.id}" class="back">&larr; Back to Suite</a>
+<div>
+	<a href="/suites/{data.id}" class="text-[15px] text-text-muted hover:text-accent mb-4 inline-block">&larr; Back to Suite</a>
 
 	{#if loading}
-		<p class="loading">Loading suite...</p>
+		<p class="text-text-muted text-center py-10">Loading suite...</p>
 	{:else if loadError}
-		<div class="error-banner">{loadError}</div>
+		<div class="bg-error/10 border border-error rounded-[--radius] px-4 py-3 text-error">{loadError}</div>
 	{:else if suite}
-		<div class="header">
-			<h1>Benchmark: {suite.name}</h1>
+		<div class="mb-6">
+			<h1 class="text-2xl">Benchmark: {suite.name}</h1>
 		</div>
 
 		{#if !started}
 			<!-- Pre-run summary -->
-			<div class="pre-run card">
-				<h2>Summary</h2>
-				<div class="summary-grid">
-					<div class="summary-item">
-						<span class="summary-label">Models</span>
-						<span class="summary-value mono">{suite.models.length}</span>
+			<div class="card p-6">
+				<h2 class="text-lg text-text-muted uppercase tracking-wide mb-4">Summary</h2>
+				<div class="grid grid-cols-4 gap-3 mb-4">
+					<div class="text-center p-3 bg-bg border border-border rounded-[--radius-sm]">
+						<span class="block text-sm text-text-muted uppercase tracking-wide mb-1">Models</span>
+						<span class="text-xl font-bold mono">{suite.models.length}</span>
 					</div>
-					<div class="summary-item">
-						<span class="summary-label">Prompts</span>
-						<span class="summary-value mono">{suite.prompts.length}</span>
+					<div class="text-center p-3 bg-bg border border-border rounded-[--radius-sm]">
+						<span class="block text-sm text-text-muted uppercase tracking-wide mb-1">Prompts</span>
+						<span class="text-xl font-bold mono">{suite.prompts.length}</span>
 					</div>
-					<div class="summary-item">
-						<span class="summary-label">Iterations</span>
-						<span class="summary-value mono">{suite.config.iterations}</span>
+					<div class="text-center p-3 bg-bg border border-border rounded-[--radius-sm]">
+						<span class="block text-sm text-text-muted uppercase tracking-wide mb-1">Iterations</span>
+						<span class="text-xl font-bold mono">{suite.config.iterations}</span>
 					</div>
-					<div class="summary-item">
-						<span class="summary-label">Total API Calls</span>
-						<span class="summary-value mono highlight">{$totalCalls}</span>
+					<div class="text-center p-3 bg-bg border border-border rounded-[--radius-sm]">
+						<span class="block text-sm text-text-muted uppercase tracking-wide mb-1">Total API Calls</span>
+						<span class="text-xl font-bold text-accent mono">{$totalCalls}</span>
 					</div>
 				</div>
 
 				{#if suite.config.judge_enabled}
-					<div class="judge-info">
-						<span class="judge-label">Judge:</span>
+					<div class="flex items-center gap-2 mb-4 px-3.5 py-2.5 bg-bg border border-border rounded-[--radius-sm] text-sm">
+						<span class="text-text-muted font-semibold uppercase tracking-wide">Judge:</span>
 						<span class="mono">{suite.config.judge_model}</span>
-						<span class="judge-criteria">
+						<span class="text-text-dim ml-auto">
 							{suite.config.judge_criteria?.join(', ')}
 						</span>
 					</div>
 				{/if}
 
-				<div class="models-preview">
+				<div class="flex flex-wrap gap-1.5 mb-5">
 					{#each suite.models as model}
 						<ModelChip {model} />
 					{/each}
 				</div>
 
-				<button class="btn btn-primary start-btn" onclick={startBenchmark}>
+				<button class="btn btn-primary w-full py-3 text-[15px]" onclick={startBenchmark}>
 					Start Benchmark
 				</button>
 			</div>
 		{:else}
 			<!-- Running / completed -->
-			<div class="run-status">
+			<div class="flex items-center gap-3 mb-4">
 				{#if $currentRun}
 					<StatusBadge status={$currentRun.status} />
 				{/if}
 				{#if $runError}
-					<span class="error-text">{$runError}</span>
+					<span class="text-error text-[15px]">{$runError}</span>
 				{/if}
 			</div>
 
-			<div class="progress-section">
-				<div class="progress-label-row">
-					<span class="progress-label">Benchmark</span>
+			<div class="mb-4">
+				<div class="mb-1.5">
+					<span class="text-sm text-text-muted uppercase tracking-wide">Benchmark</span>
 				</div>
 				<ProgressBar
 					completed={$runProgress.completed}
@@ -158,9 +158,9 @@
 			</div>
 
 			{#if showJudgeProgress}
-				<div class="progress-section">
-					<div class="progress-label-row">
-						<span class="progress-label">Judge Scoring</span>
+				<div class="mb-4">
+					<div class="mb-1.5">
+						<span class="text-sm text-text-muted uppercase tracking-wide">Judge Scoring</span>
 					</div>
 					<ProgressBar
 						completed={$judgeProgress.scored}
@@ -172,28 +172,28 @@
 
 			<!-- Live aggregates per model -->
 			{#if Object.keys($modelAggregates).length > 0}
-				<div class="aggregates">
+				<div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3 mb-6">
 					{#each Object.entries($modelAggregates) as [model, agg]}
-						<div class="aggregate-card card">
-							<div class="aggregate-model">
+						<div class="card px-4 py-3.5">
+							<div class="mb-2.5">
 								<ModelChip {model} />
 							</div>
-							<div class="aggregate-metrics mono">
-								<div class="agg-metric">
-									<span class="agg-label">Avg Latency</span>
-									<span class="agg-value">{agg.avgLatency.toFixed(0)}ms</span>
+							<div class="flex gap-4 mono">
+								<div class="flex flex-col gap-0.5">
+									<span class="text-xs text-text-dim uppercase tracking-wide">Avg Latency</span>
+									<span class="text-base font-semibold">{agg.avgLatency.toFixed(0)}ms</span>
 								</div>
-								<div class="agg-metric">
-									<span class="agg-label">Avg tok/s</span>
-									<span class="agg-value">{agg.avgTokensPerSecond.toFixed(1)}</span>
+								<div class="flex flex-col gap-0.5">
+									<span class="text-xs text-text-dim uppercase tracking-wide">Avg tok/s</span>
+									<span class="text-base font-semibold">{agg.avgTokensPerSecond.toFixed(1)}</span>
 								</div>
-								<div class="agg-metric">
-									<span class="agg-label">Success</span>
-									<span class="agg-value">{agg.successCount}/{agg.totalCount}</span>
+								<div class="flex flex-col gap-0.5">
+									<span class="text-xs text-text-dim uppercase tracking-wide">Success</span>
+									<span class="text-base font-semibold">{agg.successCount}/{agg.totalCount}</span>
 								</div>
 							</div>
 							{#if $modelJudgeAggregates[model]}
-								<div class="agg-judges">
+								<div class="flex flex-wrap gap-1 mt-2.5 pt-2 border-t border-border">
 									{#each Object.entries($modelJudgeAggregates[model]) as [criterion, jagg]}
 										<JudgeScoreBadge {criterion} score={jagg.avg} />
 									{/each}
@@ -206,12 +206,12 @@
 
 			<!-- Results grouped by model -->
 			{#each Object.entries($resultsByModel) as [model, results]}
-				<section class="model-results">
-					<h3>
+				<section class="mb-6">
+					<h3 class="flex items-center gap-2.5 mb-3">
 						<ModelChip {model} />
-						<span class="result-count mono">{results.length} Results</span>
+						<span class="text-sm text-text-dim mono">{results.length} Results</span>
 					</h3>
-					<div class="results-list">
+					<div class="flex flex-col gap-2">
 						{#each results as result (result.id)}
 							<ResultCard {result} />
 						{/each}
@@ -221,7 +221,7 @@
 
 			<!-- Post-run actions -->
 			{#if !$isRunning && $currentRun && ($currentRun.status === 'complete' || $currentRun.status === 'failed')}
-				<div class="post-run">
+				<div class="mt-6 pt-6 border-t border-border">
 					<button class="btn btn-primary" onclick={() => goto(`/runs/${$currentRun?.id}`)}>
 						View Run Details
 					</button>
@@ -230,226 +230,3 @@
 		{/if}
 	{/if}
 </div>
-
-<style>
-	.page {
-		max-width: 1200px;
-	}
-
-	.back {
-		font-size: 13px;
-		color: var(--color-text-muted);
-		margin-bottom: 16px;
-		display: inline-block;
-	}
-
-	.back:hover {
-		color: var(--color-accent);
-	}
-
-	.header {
-		margin-bottom: 24px;
-	}
-
-	.header h1 {
-		font-size: 22px;
-	}
-
-	.pre-run {
-		padding: 24px;
-	}
-
-	.pre-run h2 {
-		font-size: 16px;
-		color: var(--color-text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 16px;
-	}
-
-	.summary-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 12px;
-		margin-bottom: 16px;
-	}
-
-	.summary-item {
-		text-align: center;
-		padding: 12px;
-		background: var(--color-bg);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-	}
-
-	.summary-label {
-		display: block;
-		font-size: 11px;
-		color: var(--color-text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 4px;
-	}
-
-	.summary-value {
-		font-size: 20px;
-		font-weight: 700;
-	}
-
-	.highlight {
-		color: var(--color-accent);
-	}
-
-	.judge-info {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin-bottom: 16px;
-		padding: 10px 14px;
-		background: var(--color-bg);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		font-size: 12px;
-	}
-
-	.judge-label {
-		color: var(--color-text-muted);
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.judge-criteria {
-		color: var(--color-text-dim);
-		margin-left: auto;
-	}
-
-	.models-preview {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-		margin-bottom: 20px;
-	}
-
-	.start-btn {
-		width: 100%;
-		padding: 12px;
-		font-size: 15px;
-	}
-
-	.run-status {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		margin-bottom: 16px;
-	}
-
-	.error-text {
-		color: var(--color-error);
-		font-size: 13px;
-	}
-
-	.progress-section {
-		margin-bottom: 16px;
-	}
-
-	.progress-label-row {
-		margin-bottom: 6px;
-	}
-
-	.progress-label {
-		font-size: 11px;
-		color: var(--color-text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.aggregates {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-		gap: 12px;
-		margin-bottom: 24px;
-	}
-
-	.aggregate-card {
-		padding: 14px 16px;
-	}
-
-	.aggregate-model {
-		margin-bottom: 10px;
-	}
-
-	.aggregate-metrics {
-		display: flex;
-		gap: 16px;
-	}
-
-	.agg-metric {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.agg-label {
-		font-size: 10px;
-		color: var(--color-text-dim);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.agg-value {
-		font-size: 14px;
-		font-weight: 600;
-	}
-
-	.agg-judges {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px;
-		margin-top: 10px;
-		padding-top: 8px;
-		border-top: 1px solid var(--color-border);
-	}
-
-	.model-results {
-		margin-bottom: 24px;
-	}
-
-	.model-results h3 {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin-bottom: 12px;
-	}
-
-	.result-count {
-		font-size: 12px;
-		color: var(--color-text-dim);
-	}
-
-	.results-list {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.post-run {
-		margin-top: 24px;
-		padding-top: 24px;
-		border-top: 1px solid var(--color-border);
-	}
-
-	.loading {
-		color: var(--color-text-muted);
-		text-align: center;
-		padding: 40px;
-	}
-
-	.error-banner {
-		background: rgba(248, 113, 113, 0.1);
-		border: 1px solid var(--color-error);
-		border-radius: var(--radius);
-		padding: 12px 16px;
-		color: var(--color-error);
-	}
-</style>

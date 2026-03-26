@@ -132,23 +132,23 @@
 	}
 </script>
 
-<div class="model-picker">
+<div class="flex flex-col gap-2">
 	{#if selected.length > 0}
-		<div class="selected-chips">
+		<div class="flex flex-wrap gap-1.5 mb-1">
 			{#each selected as model, i}
 				<ModelChip {model} removable onremove={() => removeModel(i)} />
 			{/each}
 		</div>
 	{/if}
 
-	<div class="picker-controls">
-		<button type="button" class="btn btn-browse" onclick={() => (showDropdown = !showDropdown)}>
+	<div class="flex gap-2 items-stretch">
+		<button type="button" class="btn whitespace-nowrap flex items-center gap-1.5" onclick={() => (showDropdown = !showDropdown)}>
 			{showDropdown ? 'Close' : 'Browse Models'}
-			<span class="arrow">{showDropdown ? '▴' : '▾'}</span>
+			<span class="text-xs">{showDropdown ? '▴' : '▾'}</span>
 		</button>
-		<div class="manual-add">
+		<div class="flex gap-1 flex-1">
 			<input
-				class="input"
+				class="input flex-1"
 				bind:value={manualInput}
 				onkeydown={handleManualKeydown}
 				placeholder="Enter model ID manually"
@@ -158,19 +158,19 @@
 	</div>
 
 	{#if showDropdown}
-		<div class="dropdown fade-in">
+		<div class="bg-bg-elevated border border-border rounded-[--radius] overflow-hidden fade-in">
 			{#if loadingModels}
-				<p class="dropdown-status">Loading models...</p>
+				<p class="py-5 text-center text-text-muted text-base">Loading models...</p>
 			{:else if loadError}
-				<p class="dropdown-status error">{loadError}</p>
+				<p class="py-5 text-center text-error text-base">{loadError}</p>
 			{:else}
-				<div class="dropdown-filters">
+				<div class="flex gap-2 px-3 py-2.5 border-b border-border">
 					<input
-						class="input search-input"
+						class="input flex-1"
 						bind:value={search}
 						placeholder="Search by name or ID..."
 					/>
-					<select class="input provider-select" bind:value={providerFilter}>
+					<select class="input w-40 cursor-pointer" bind:value={providerFilter}>
 						<option value="">All Providers</option>
 						{#each providers() as provider}
 							<option value={provider}>{provider}</option>
@@ -178,42 +178,46 @@
 					</select>
 				</div>
 
-				<div class="dropdown-header">
-					<button type="button" class="sort-btn" onclick={() => toggleSort('name')}>
+				<div class="grid grid-cols-[1fr_80px_100px_32px] gap-2 px-3 py-1.5 border-b border-border bg-bg">
+					<button type="button" class="bg-transparent border-none text-text-muted text-sm font-semibold uppercase tracking-wide text-left cursor-pointer py-1 hover:text-accent" onclick={() => toggleSort('name')}>
 						Model{sortIndicator('name')}
 					</button>
-					<button type="button" class="sort-btn" onclick={() => toggleSort('context')}>
+					<button type="button" class="bg-transparent border-none text-text-muted text-sm font-semibold uppercase tracking-wide text-left cursor-pointer py-1 hover:text-accent" onclick={() => toggleSort('context')}>
 						Context{sortIndicator('context')}
 					</button>
-					<button type="button" class="sort-btn" onclick={() => toggleSort('price')}>
+					<button type="button" class="bg-transparent border-none text-text-muted text-sm font-semibold uppercase tracking-wide text-left cursor-pointer py-1 hover:text-accent" onclick={() => toggleSort('price')}>
 						Price/Prompt{sortIndicator('price')}
 					</button>
 					<span></span>
 				</div>
 
-				<div class="dropdown-list">
+				<div class="max-h-80 overflow-y-auto">
 					{#each filtered().slice(0, 100) as model (model.id)}
-						<button type="button" class="model-row" onclick={() => addModel(model.id)}>
-							<div class="model-info">
-								<span class="model-name">{model.name}</span>
-								<span class="model-id mono">{model.id}</span>
+						<button
+							type="button"
+							class="grid grid-cols-[1fr_80px_100px_32px] gap-2 items-center w-full py-2 px-3 border-none border-b border-border bg-transparent text-text cursor-pointer text-left transition-[background] duration-100 last:border-b-0 hover:bg-accent-bg"
+							onclick={() => addModel(model.id)}
+						>
+							<div class="flex flex-col gap-px min-w-0">
+								<span class="text-base font-medium truncate">{model.name}</span>
+								<span class="text-sm text-text-muted truncate mono">{model.id}</span>
 							</div>
-							<span class="model-context mono">{formatContext(model.context_length)}</span>
-							<span class="model-price mono">{formatPrice(model.pricing.prompt)}</span>
-							<span class="model-add">+</span>
+							<span class="text-sm text-text-muted text-right mono">{formatContext(model.context_length)}</span>
+							<span class="text-sm text-text-muted text-right mono">{formatPrice(model.pricing.prompt)}</span>
+							<span class="text-lg text-accent text-center font-semibold">+</span>
 						</button>
 					{/each}
 					{#if filtered().length === 0}
-						<p class="dropdown-status">No models found</p>
+						<p class="py-5 text-center text-text-muted text-base">No models found</p>
 					{/if}
 					{#if filtered().length > 100}
-						<p class="dropdown-status">
+						<p class="py-5 text-center text-text-muted text-base">
 							{filtered().length - 100} more models — refine search
 						</p>
 					{/if}
 				</div>
 
-				<div class="dropdown-footer">
+				<div class="flex justify-between px-3 py-2 border-t border-border text-sm text-text-dim">
 					<span class="mono">{allModels.length} models available</span>
 					<span class="mono">{selected.length} selected</span>
 				</div>
@@ -221,181 +225,3 @@
 		</div>
 	{/if}
 </div>
-
-<style>
-	.model-picker {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.selected-chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-		margin-bottom: 4px;
-	}
-
-	.picker-controls {
-		display: flex;
-		gap: 8px;
-		align-items: stretch;
-	}
-
-	.btn-browse {
-		white-space: nowrap;
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
-
-	.arrow {
-		font-size: 10px;
-	}
-
-	.manual-add {
-		display: flex;
-		gap: 4px;
-		flex: 1;
-	}
-
-	.manual-add .input {
-		flex: 1;
-		font-size: 13px;
-	}
-
-	.dropdown {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius);
-		overflow: hidden;
-	}
-
-	.dropdown-filters {
-		display: flex;
-		gap: 8px;
-		padding: 10px 12px;
-		border-bottom: 1px solid var(--color-border);
-	}
-
-	.search-input {
-		flex: 1;
-	}
-
-	.provider-select {
-		width: 160px;
-		cursor: pointer;
-	}
-
-	.dropdown-header {
-		display: grid;
-		grid-template-columns: 1fr 80px 100px 32px;
-		gap: 8px;
-		padding: 6px 12px;
-		border-bottom: 1px solid var(--color-border);
-		background: var(--color-bg);
-	}
-
-	.sort-btn {
-		background: none;
-		border: none;
-		color: var(--color-text-muted);
-		font-size: 11px;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		text-align: left;
-		cursor: pointer;
-		padding: 4px 0;
-	}
-
-	.sort-btn:hover {
-		color: var(--color-accent);
-	}
-
-	.dropdown-list {
-		max-height: 320px;
-		overflow-y: auto;
-	}
-
-	.model-row {
-		display: grid;
-		grid-template-columns: 1fr 80px 100px 32px;
-		gap: 8px;
-		align-items: center;
-		width: 100%;
-		padding: 8px 12px;
-		border: none;
-		border-bottom: 1px solid var(--color-border);
-		background: transparent;
-		color: var(--color-text);
-		cursor: pointer;
-		text-align: left;
-		transition: background 0.1s;
-	}
-
-	.model-row:last-child {
-		border-bottom: none;
-	}
-
-	.model-row:hover {
-		background: var(--color-accent-bg);
-	}
-
-	.model-info {
-		display: flex;
-		flex-direction: column;
-		gap: 1px;
-		min-width: 0;
-	}
-
-	.model-name {
-		font-size: 13px;
-		font-weight: 500;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.model-id {
-		font-size: 11px;
-		color: var(--color-text-muted);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.model-context,
-	.model-price {
-		font-size: 12px;
-		color: var(--color-text-muted);
-		text-align: right;
-	}
-
-	.model-add {
-		font-size: 16px;
-		color: var(--color-accent);
-		text-align: center;
-		font-weight: 600;
-	}
-
-	.dropdown-footer {
-		display: flex;
-		justify-content: space-between;
-		padding: 8px 12px;
-		border-top: 1px solid var(--color-border);
-		font-size: 11px;
-		color: var(--color-text-dim);
-	}
-
-	.dropdown-status {
-		padding: 20px;
-		text-align: center;
-		color: var(--color-text-muted);
-		font-size: 13px;
-	}
-
-	.dropdown-status.error {
-		color: var(--color-error);
-	}
-</style>

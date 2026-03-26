@@ -1,18 +1,6 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import {
-		Chart,
-		RadialLinearScale,
-		PointElement,
-		LineElement,
-		Filler,
-		Tooltip,
-		Legend
-	} from 'chart.js';
 	import type { ModelSummary } from '$lib/types';
-	import { getModelColor, getModelColorAlpha } from '$lib/utils/chart-theme';
-
-	Chart.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
+	import { getModelColor } from '$lib/utils/chart-colors';
 
 	interface Props {
 		modelSummaries: ModelSummary[];
@@ -20,99 +8,120 @@
 	}
 
 	let { modelSummaries, criteria }: Props = $props();
-	let canvas: HTMLCanvasElement;
-	let chart: Chart | null = null;
 
 	const hasScores = $derived(
 		modelSummaries.some((m) => m.avg_judge_scores && Object.keys(m.avg_judge_scores).length > 0)
 	);
 
-	onMount(() => {
-		if (!hasScores || criteria.length === 0) return;
+	const modelsWithScores = $derived(
+		modelSummaries.filter(
+			(m) => m.avg_judge_scores && Object.keys(m.avg_judge_scores).length > 0
+		)
+	);
 
-		const datasets = modelSummaries
-			.filter((m) => m.avg_judge_scores && Object.keys(m.avg_judge_scores).length > 0)
-			.map((m, i) => ({
-				label: m.model.split('/').pop() || m.model,
-				data: criteria.map((c) => m.avg_judge_scores?.[c] ?? 0),
-				backgroundColor: getModelColorAlpha(i, 0.15),
-				borderColor: getModelColor(i),
-				borderWidth: 2,
-				pointBackgroundColor: getModelColor(i),
-				pointRadius: 4
-			}));
+	const maxScore = 10;
+	const levels = [2, 4, 6, 8, 10];
+	const cx = 150;
+	const cy = 150;
+	const radius = 120;
 
-		chart = new Chart(canvas!, {
-			type: 'radar',
-			data: {
-				labels: criteria,
-				datasets
-			},
-			options: {
-				responsive: true,
-				maintainAspectRatio: false,
-				scales: {
-					r: {
-						min: 0,
-						max: 10,
-						ticks: {
-							stepSize: 2,
-							color: '#5a5766',
-							backdropColor: 'transparent'
-						},
-						grid: { color: '#2a2830' },
-						angleLines: { color: '#2a2830' },
-						pointLabels: {
-							color: '#8b8894',
-							font: { family: "'JetBrains Mono', monospace", size: 11 }
-						}
-					}
-				},
-				plugins: {
-					legend: {
-						labels: {
-							color: '#8b8894',
-							font: { family: "'JetBrains Mono', monospace", size: 11 }
-						}
-					},
-					tooltip: {
-						backgroundColor: '#1e1c23',
-						titleColor: '#e4e2e8',
-						bodyColor: '#8b8894',
-						borderColor: '#2a2830',
-						borderWidth: 1
-					}
-				}
-			}
-		});
-	});
+	function angleFor(i: number, total: number): number {
+		return (Math.PI * 2 * i) / total - Math.PI / 2;
+	}
 
-	onDestroy(() => {
-		chart?.destroy();
-	});
+	function pointOnCircle(angle: number, r: number): { x: number; y: number } {
+		return {
+			x: cx + r * Math.cos(angle),
+			y: cy + r * Math.sin(angle)
+		};
+	}
+
+	function polygonPoints(values: number[]): string {
+		return values
+			.map((v, i) => {
+				const angle = angleFor(i, values.length);
+				const r = (v / maxScore) * radius;
+				const p = pointOnCircle(angle, r);
+				return `${p.x},${p.y}`;
+			})
+			.join(' ');
+	}
+
+	function gridPolygon(level: number): string {
+		const r = (level / maxScore) * radius;
+		return criteria
+			.map((_, i) => {
+				const angle = angleFor(i, criteria.length);
+				const p = pointOnCircle(angle, r);
+				return `${p.x},${p.y}`;
+			})
+			.join(' ');
+	}
 </script>
 
 {#if hasScores && criteria.length > 0}
-	<div class="chart-wrapper">
-		<canvas bind:this={canvas}></canvas>
+	<div class="relative w-full h-full flex flex-col items-center">
+		<svg viewBox="0 0 300 300" class="w-full max-w-[300px] flex-1 min-h-0">
+			<!-- Grid levels -->
+			{#each levels as level}
+				<polygon points={gridPolygon(level)} fill="none" stroke="#2a2830" stroke-width="1" />
+			{/each}
+
+			<!-- Axis lines -->
+			{#each criteria as _, i}
+				{@const angle = angleFor(i, criteria.length)}
+				{@const end = pointOnCircle(angle, radius)}
+				<line x1={cx} y1={cy} x2={end.x} y2={end.y} stroke="#2a2830" stroke-width="1" />
+			{/each}
+
+			<!-- Data polygons -->
+			{#each modelsWithScores as m, mi}
+				{@const values = criteria.map((c) => m.avg_judge_scores?.[c] ?? 0)}
+				{@const color = getModelColor(mi)}
+				<polygon
+					points={polygonPoints(values)}
+					fill={color}
+					fill-opacity="0.15"
+					stroke={color}
+					stroke-width="2"
+				/>
+				{#each values as v, vi}
+					{@const angle = angleFor(vi, criteria.length)}
+					{@const p = pointOnCircle(angle, (v / maxScore) * radius)}
+					<circle cx={p.x} cy={p.y} r="3" fill={color} />
+				{/each}
+			{/each}
+
+			<!-- Labels -->
+			{#each criteria as c, i}
+				{@const angle = angleFor(i, criteria.length)}
+				{@const p = pointOnCircle(angle, radius + 16)}
+				<text
+					x={p.x}
+					y={p.y}
+					text-anchor="middle"
+					dominant-baseline="central"
+					fill="#8b8894"
+					font-size="13"
+					font-family="'JetBrains Mono', monospace"
+				>
+					{c}
+				</text>
+			{/each}
+		</svg>
+
+		<!-- Legend -->
+		{#if modelsWithScores.length > 1}
+			<div class="flex gap-4 flex-wrap justify-center pt-2">
+				{#each modelsWithScores as m, i}
+					<div class="flex items-center gap-1.5 text-sm text-text-muted font-mono">
+						<span class="w-2 h-2 rounded-full shrink-0" style:background={getModelColor(i)}></span>
+						<span>{m.model.split('/').pop() || m.model}</span>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</div>
 {:else}
-	<div class="no-data">No judge scores available</div>
+	<div class="flex items-center justify-center h-full text-text-dim text-base">No judge scores available</div>
 {/if}
-
-<style>
-	.chart-wrapper {
-		position: relative;
-		width: 100%;
-		height: 100%;
-	}
-
-	.no-data {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-		color: var(--color-text-dim);
-		font-size: 13px;
-	}
-</style>

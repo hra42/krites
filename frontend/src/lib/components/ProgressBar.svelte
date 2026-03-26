@@ -8,38 +8,9 @@
 	let { completed, total, percent }: Props = $props();
 </script>
 
-<div class="progress-container">
-	<div class="progress-bar">
-		<div class="progress-fill" style="width: {percent}%"></div>
+<div class="flex items-center gap-3">
+	<div class="flex-1 h-2 bg-bg-input rounded-[--radius-sm] overflow-hidden">
+		<div class="h-full bg-accent rounded-[--radius-sm] transition-[width] duration-300 ease-in-out" style="width: {percent}%"></div>
 	</div>
-	<span class="progress-label mono">{completed}/{total} ({percent}%)</span>
+	<span class="text-text-muted whitespace-nowrap mono">{completed}/{total} ({percent}%)</span>
 </div>
-
-<style>
-	.progress-container {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-	}
-
-	.progress-bar {
-		flex: 1;
-		height: 8px;
-		background: var(--color-bg-input);
-		border-radius: 4px;
-		overflow: hidden;
-	}
-
-	.progress-fill {
-		height: 100%;
-		background: var(--color-accent);
-		border-radius: 4px;
-		transition: width 0.3s ease;
-	}
-
-	.progress-label {
-		font-size: 13px;
-		color: var(--color-text-muted);
-		white-space: nowrap;
-	}
-</style>

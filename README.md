@@ -1,9 +1,27 @@
 # Krites
 
+![Krites](media/krites.png)
+
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat&logo=go)](https://go.dev)
 [![License: Unlicense](https://img.shields.io/badge/License-Unlicense-blue.svg)](LICENSE)
 
+> **Krites** derives from Greek *κρίνω* (krinō, "to judge") — exactly what the platform does: judge models. The word *criterion* shares the same root.
+
 An LLM benchmark platform — send identical prompts to multiple models, measure latency/throughput/cost/quality, and visually compare results. Built with Go + SvelteKit.
+
+## Screenshots
+
+| Dashboard | Suite Configuration |
+|:-:|:-:|
+| ![Dashboard](media/krites5.png) | ![Suite Detail](media/krites4.png) |
+
+| Live Benchmark Run | Run Detail with Charts |
+|:-:|:-:|
+| ![Live Run](media/krites6.png) | ![Run Detail](media/krites2.png) |
+
+| Run History | Analytics |
+|:-:|:-:|
+| ![Runs](media/krites3.png) | ![Analytics](media/krites1.png) |
 
 ## Features
 

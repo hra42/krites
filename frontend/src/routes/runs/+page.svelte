@@ -29,39 +29,39 @@
 	}
 </script>
 
-<div class="page">
-	<h1>Runs</h1>
+<div>
+	<h1 class="text-2xl mb-6">Runs</h1>
 
 	{#if loading}
-		<p class="loading">Loading runs...</p>
+		<p class="text-text-muted text-center py-10">Loading runs...</p>
 	{:else if error}
-		<div class="error-banner">{error}</div>
+		<div class="bg-error/10 border border-error rounded-[--radius] px-4 py-3 text-error">{error}</div>
 	{:else if runs.length === 0}
-		<div class="empty card">
-			<p>No benchmark runs yet.</p>
+		<div class="card text-center py-10">
+			<p class="text-text-muted mb-4">No benchmark runs yet.</p>
 			<a href="/suites" class="btn btn-primary">Create Suite</a>
 		</div>
 	{:else}
-		<div class="table-wrapper">
-			<table>
+		<div class="overflow-x-auto">
+			<table class="w-full border-collapse">
 				<thead>
 					<tr>
-						<th>Suite</th>
-						<th>Status</th>
-						<th>Results</th>
-						<th>Created</th>
-						<th></th>
+						<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Suite</th>
+						<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Status</th>
+						<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Results</th>
+						<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Created</th>
+						<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border"></th>
 					</tr>
 				</thead>
 				<tbody>
 					{#each runs as run}
-						<tr>
-							<td class="suite-name">{run.suite_name}</td>
-							<td><StatusBadge status={run.status} /></td>
-							<td class="mono">{run.result_count}</td>
-							<td class="mono date">{formatDate(run.created_at)}</td>
-							<td>
-								<a href="/runs/{run.id}" class="detail-link">Details &rarr;</a>
+						<tr class="hover:bg-bg-elevated">
+							<td class="px-3 py-3 border-b border-border text-[15px] font-medium">{run.suite_name}</td>
+							<td class="px-3 py-3 border-b border-border"><StatusBadge status={run.status} /></td>
+							<td class="px-3 py-3 border-b border-border mono">{run.result_count}</td>
+							<td class="px-3 py-3 border-b border-border text-sm text-text-muted mono">{formatDate(run.created_at)}</td>
+							<td class="px-3 py-3 border-b border-border">
+								<a href="/runs/{run.id}" class="text-[15px] text-accent hover:underline">Details &rarr;</a>
 							</td>
 						</tr>
 					{/each}
@@ -70,85 +70,3 @@
 		</div>
 	{/if}
 </div>
-
-<style>
-	.page {
-		max-width: 900px;
-	}
-
-	h1 {
-		font-size: 22px;
-		margin-bottom: 24px;
-	}
-
-	.table-wrapper {
-		overflow-x: auto;
-	}
-
-	table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	th {
-		text-align: left;
-		font-size: 11px;
-		color: var(--color-text-dim);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		padding: 8px 12px;
-		border-bottom: 1px solid var(--color-border);
-	}
-
-	td {
-		padding: 12px;
-		border-bottom: 1px solid var(--color-border);
-		font-size: 14px;
-	}
-
-	tr:hover {
-		background: var(--color-bg-elevated);
-	}
-
-	.suite-name {
-		font-weight: 500;
-	}
-
-	.date {
-		font-size: 12px;
-		color: var(--color-text-muted);
-	}
-
-	.detail-link {
-		font-size: 13px;
-		color: var(--color-accent);
-	}
-
-	.detail-link:hover {
-		text-decoration: underline;
-	}
-
-	.loading {
-		color: var(--color-text-muted);
-		text-align: center;
-		padding: 40px;
-	}
-
-	.error-banner {
-		background: rgba(248, 113, 113, 0.1);
-		border: 1px solid var(--color-error);
-		border-radius: var(--radius);
-		padding: 12px 16px;
-		color: var(--color-error);
-	}
-
-	.empty {
-		text-align: center;
-		padding: 40px;
-		color: var(--color-text-muted);
-	}
-
-	.empty p {
-		margin-bottom: 16px;
-	}
-</style>
