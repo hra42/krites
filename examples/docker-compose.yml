@@ -1,0 +1,22 @@
+# DEPRECATED: Use the root-level docker-compose.yml instead.
+# See ../docker-compose.yml for the full-stack setup with SvelteKit frontend.
+
+services:
+  krites:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    volumes:
+      - backend-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  backend-data:
