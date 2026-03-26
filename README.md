@@ -1,61 +1,104 @@
-# krites
+# Krites
 
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat&logo=go)](https://go.dev)
 [![License: Unlicense](https://img.shields.io/badge/License-Unlicense-blue.svg)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/hra42/krites)](https://goreportcard.com/report/github.com/hra42/krites)
 
-A single-binary, production-ready AI API proxy with per-tenant isolation. Not a framework — a deployable backend. Connect to 300+ models via OpenRouter, get conversation logging for free, extend only what you need.
+An LLM benchmark platform — send identical prompts to multiple models, measure latency/throughput/cost/quality, and visually compare results. Built with Go + SvelteKit.
 
 ## Features
 
-- **Multi-tenant Isolation** — Each service gets its own DuckDB database file
-- **OpenRouter Integration** — Unified interface to 300+ AI models
-- **Streaming Support** — Server-Sent Events (SSE) for real-time responses
-- **Async Conversation Logging** — Non-blocking logging to preserve API latency
-- **Service Management API** — Create, list, and delete isolated services at runtime
-- **Conversation History** — Query history with pagination and session filtering
-- **Configuration** — YAML-based config with environment variable expansion
+- **Side-by-Side Model Comparison** — Benchmark multiple LLMs with the same prompts
+- **Real-Time Streaming** — Watch results arrive live via SSE as benchmarks run
+- **Rich Metrics** — TTFB, total latency, tokens/sec, cost estimation per model
+- **LLM-as-Judge** — Optional automated quality scoring on configurable criteria (1-10 scale)
+- **Interactive Charts** — Latency bars, cost comparison, judge radar charts, iteration trends
+- **Analytics Dashboard** — Cross-run model comparisons and performance trends
+- **300+ Models** — Access via OpenRouter API (OpenAI, Anthropic, Google, Meta, etc.)
+- **Model Browser** — Search, filter, and sort all available models by provider, context length, and price
+- **Export** — Download results as CSV or JSON
+- **Docker Ready** — Full-stack deployment with Docker Compose
 
 ## Quick Start
+
+### Local Development
 
 ```bash
 git clone https://github.com/hra42/krites.git
 cd krites
-export OPENROUTER_API_KEY="your-api-key-here"
+
+# Start backend
+export OPENROUTER_API_KEY="your-key-here"
 go run main.go
+
+# Start frontend (in another terminal)
+cd frontend
+npm install
+npm run dev
 ```
 
-Verify with:
-
-```bash
-curl http://localhost:8080/health
-```
-
-### Using the Quickstart Script
-
-The quickstart script creates a config file, sets up a default service, and starts the backend:
-
-```bash
-export OPENROUTER_API_KEY="your-api-key-here"
-./scripts/quickstart.sh
-```
+Backend runs on `http://localhost:8080`, frontend on `http://localhost:5173`.
 
 ### Docker Compose
 
-Run the full stack (backend + frontend) with Docker Compose:
-
 ```bash
-cd examples
 cp .env.example .env
 # Edit .env and set your OPENROUTER_API_KEY
-docker compose up
+docker compose up -d
 ```
 
-The frontend will be available at `http://localhost:3000` and the backend at `http://localhost:8080`.
+Frontend at `http://localhost:3000`, backend at `http://localhost:8080`.
+
+## How It Works
+
+1. **Create a Suite** — Define prompts, select models, configure parameters (temperature, tokens, iterations, parallelism)
+2. **Run a Benchmark** — Each `(model × prompt × iteration)` tuple is executed as a parallel API call
+3. **Watch Live Results** — Results stream in real-time, grouped by model with live aggregates
+4. **Analyze** — Compare models via summary cards, charts, and detailed tables
+5. **Judge (Optional)** — Enable LLM-as-Judge to score responses on criteria like accuracy, coherence, helpfulness
+
+## Architecture
+
+```
+SvelteKit Frontend (Port 5173/3000)
+       │ REST + SSE
+Go Backend (Port 8080)
+       │                    │
+  OpenRouter API       DuckDB (persistence)
+  (300+ models)
+```
+
+### Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Go, Fiber, DuckDB |
+| Frontend | SvelteKit, TypeScript, Chart.js |
+| LLM Access | OpenRouter API |
+| Streaming | Server-Sent Events (SSE) |
+| Deployment | Docker Compose |
+
+### API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/benchmarks/suites` | List all suites |
+| `POST` | `/benchmarks/suites` | Create a new suite |
+| `GET` | `/benchmarks/suites/:id` | Get suite details |
+| `PUT` | `/benchmarks/suites/:id` | Update a suite |
+| `DELETE` | `/benchmarks/suites/:id` | Delete a suite |
+| `POST` | `/benchmarks/suites/:id/run` | Start a benchmark run (returns 202) |
+| `GET` | `/benchmarks/runs` | List all runs |
+| `GET` | `/benchmarks/runs/:id` | Get run with results + summary |
+| `GET` | `/benchmarks/runs/:id/stream` | SSE stream for live updates |
+| `GET` | `/benchmarks/runs/:id/export` | Export results (CSV/JSON) |
+| `GET` | `/benchmarks/analytics/overview` | Platform statistics |
+| `GET` | `/benchmarks/analytics/models` | Cross-run model comparison |
+| `GET` | `/benchmarks/analytics/trends` | Model performance trends |
+| `GET` | `/v1/models` | List available OpenRouter models |
 
 ## Configuration
 
-Config loads from `config.yaml` with `${ENV_VAR}` expansion (12-factor style).
+Config loads from `config.yaml` with `${ENV_VAR}` expansion:
 
 ```yaml
 server:
@@ -68,86 +111,17 @@ openrouter:
 
 database:
   services_dir: "./data/services"
-  max_connections: 10
-
-services:
-  - id: default
-    name: "Default Service"
 ```
 
 **Required**: `OPENROUTER_API_KEY` environment variable.
 
-## API Overview
-
-See [docs/API.md](docs/API.md) for full endpoint documentation with curl examples.
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /v1/models` | List available models from OpenRouter |
-| `POST /v1/chat/completions` | Chat completion (requires `X-Service-ID` header) |
-| `POST /services` | Create a new service |
-| `GET /services` | List all services |
-| `GET /services/:id` | Get service details |
-| `DELETE /services/:id` | Delete a service |
-| `GET /services/:id/conversations` | Query conversation history |
-
-### Quick Example
-
-```bash
-# Create a service
-curl -X POST http://localhost:8080/services \
-  -H "Content-Type: application/json" \
-  -d '{"id": "my-app", "name": "My App"}'
-
-# Send a chat completion
-curl -X POST http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "X-Service-ID: my-app" \
-  -d '{
-    "model": "openai/gpt-4-turbo",
-    "messages": [{"role": "user", "content": "Hello!"}]
-  }'
-```
-
-## Architecture
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed design documentation.
-
-**Request flow**: HTTP → Fiber middleware (extract `X-Service-ID`, load DB) → Handler → OpenRouter SDK → Response + async conversation logging to DuckDB.
-
-**Key packages**: `config/`, `service/`, `database/`, `handler/`, `middleware/`, `openrouter/`, `models/`
-
-## Why not X?
-
-| Feature | krites | LangChain | LiteLLM | OpenRouter Direct |
-|---------|-----------|-----------|---------|-------------------|
-| Multi-tenant isolation | Per-service DuckDB | Manual | Manual | None |
-| Single binary | Yes | No (Python) | No (Python) | N/A |
-| Conversation logging | Built-in, async | Manual setup | Manual setup | None |
-| Model access | 300+ via OpenRouter | Multiple providers | Multiple providers | 300+ models |
-| Streaming | SSE built-in | Framework-dependent | Yes | Yes |
-| Complexity | Minimal, focused | High (large framework) | Moderate | API only |
-| Extensibility | Middleware + interfaces | Plugins/chains | Callbacks | N/A |
-
-**LangChain** is a comprehensive AI framework with chains, agents, and memory abstractions. If you need orchestration primitives, use LangChain. If you need a deployable backend with tenant isolation, use krites.
-
-**LiteLLM** is a Python proxy that normalizes LLM APIs. It focuses on API compatibility across providers. krites focuses on multi-tenant isolation and conversation logging as first-class features, deployed as a single Go binary.
-
-**OpenRouter Direct** gives you model access but no tenant isolation, conversation logging, or service management. krites wraps OpenRouter and adds the infrastructure layer.
-
 ## Build & Test
 
 ```bash
-go build -o krites .      # Build
-go test ./...                  # Test
-go test -race ./...            # Race detection
-go test -cover ./...           # Coverage
-golangci-lint run              # Lint
+go build -o krites .         # Build backend
+go test ./...                 # Run all tests
+cd frontend && npm run build  # Build frontend
 ```
-
-## Extending
-
-See [docs/EXTENDING.md](docs/EXTENDING.md) for guides on adding JWT auth, RAG, cost tracking, model routing, prompt versioning, fine-tuning management, and webhook integration.
 
 ## License
 
