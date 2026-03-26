@@ -60,8 +60,8 @@
 </script>
 
 {#if hasScores && criteria.length > 0}
-	<div class="chart-wrapper">
-		<svg viewBox="0 0 300 300" class="radar-svg">
+	<div class="relative w-full h-full flex flex-col items-center">
+		<svg viewBox="0 0 300 300" class="w-full max-w-[300px] flex-1 min-h-0">
 			<!-- Grid levels -->
 			{#each levels as level}
 				<polygon points={gridPolygon(level)} fill="none" stroke="#2a2830" stroke-width="1" />
@@ -102,7 +102,7 @@
 					text-anchor="middle"
 					dominant-baseline="central"
 					fill="#8b8894"
-					font-size="11"
+					font-size="13"
 					font-family="'JetBrains Mono', monospace"
 				>
 					{c}
@@ -112,67 +112,16 @@
 
 		<!-- Legend -->
 		{#if modelsWithScores.length > 1}
-			<div class="legend">
+			<div class="flex gap-4 flex-wrap justify-center pt-2">
 				{#each modelsWithScores as m, i}
-					<div class="legend-item">
-						<span class="legend-dot" style:background={getModelColor(i)}></span>
-						<span class="legend-label">{m.model.split('/').pop() || m.model}</span>
+					<div class="flex items-center gap-1.5 text-sm text-text-muted font-mono">
+						<span class="w-2 h-2 rounded-full shrink-0" style:background={getModelColor(i)}></span>
+						<span>{m.model.split('/').pop() || m.model}</span>
 					</div>
 				{/each}
 			</div>
 		{/if}
 	</div>
 {:else}
-	<div class="no-data">No judge scores available</div>
+	<div class="flex items-center justify-center h-full text-text-dim text-base">No judge scores available</div>
 {/if}
-
-<style>
-	.chart-wrapper {
-		position: relative;
-		width: 100%;
-		height: 100%;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.radar-svg {
-		width: 100%;
-		max-width: 300px;
-		flex: 1;
-		min-height: 0;
-	}
-
-	.legend {
-		display: flex;
-		gap: 16px;
-		flex-wrap: wrap;
-		justify-content: center;
-		padding-top: 8px;
-	}
-
-	.legend-item {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		font-size: 11px;
-		color: #8b8894;
-		font-family: 'JetBrains Mono', monospace;
-	}
-
-	.legend-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		flex-shrink: 0;
-	}
-
-	.no-data {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-		color: var(--color-text-dim);
-		font-size: 13px;
-	}
-</style>

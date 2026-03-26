@@ -19,7 +19,7 @@
 	);
 </script>
 
-<div class="chart-wrapper">
+<div class="relative w-full h-full">
 	<BarChart
 		data={chartData}
 		x="model"
@@ -36,11 +36,3 @@
 		}}
 	/>
 </div>
-
-<style>
-	.chart-wrapper {
-		position: relative;
-		width: 100%;
-		height: 100%;
-	}
-</style>

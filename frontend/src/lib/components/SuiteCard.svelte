@@ -16,67 +16,18 @@
 	}
 </script>
 
-<a href="/suites/{suite.id}" class="card fade-in">
-	<div class="header">
-		<h3>{suite.name}</h3>
+<a href="/suites/{suite.id}" class="block bg-bg-card border border-border rounded-[--radius-lg] p-5 transition-all duration-150 text-text hover:border-accent hover:-translate-y-px fade-in">
+	<div class="mb-2">
+		<h3 class="text-lg font-semibold">{suite.name}</h3>
 	</div>
 	{#if suite.description}
-		<p class="description">{suite.description}</p>
+		<p class="text-text-muted text-base mb-3 leading-[1.4]">{suite.description}</p>
 	{/if}
-	<div class="meta">
-		<span class="meta-item mono">{suite.model_count} Models</span>
-		<span class="dot">&middot;</span>
-		<span class="meta-item mono">{suite.prompt_count} Prompts</span>
-		<span class="dot">&middot;</span>
-		<span class="meta-item">{formatDate(suite.created_at)}</span>
+	<div class="flex items-center gap-2 text-sm text-text-dim">
+		<span class="mono">{suite.model_count} Models</span>
+		<span>&middot;</span>
+		<span class="mono">{suite.prompt_count} Prompts</span>
+		<span>&middot;</span>
+		<span>{formatDate(suite.created_at)}</span>
 	</div>
 </a>
-
-<style>
-	.card {
-		display: block;
-		background: var(--color-bg-card);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		padding: 20px;
-		transition: all 0.15s ease;
-		color: var(--color-text);
-	}
-
-	.card:hover {
-		border-color: var(--color-accent);
-		transform: translateY(-1px);
-	}
-
-	.header {
-		margin-bottom: 8px;
-	}
-
-	h3 {
-		font-size: 16px;
-		font-weight: 600;
-	}
-
-	.description {
-		color: var(--color-text-muted);
-		font-size: 13px;
-		margin-bottom: 12px;
-		line-height: 1.4;
-	}
-
-	.meta {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 12px;
-		color: var(--color-text-dim);
-	}
-
-	.meta-item {
-		font-size: 12px;
-	}
-
-	.dot {
-		color: var(--color-text-dim);
-	}
-</style>

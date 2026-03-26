@@ -16,7 +16,7 @@
 	);
 </script>
 
-<div class="chart-wrapper">
+<div class="relative w-full h-full">
 	<BarChart
 		data={chartData}
 		x="total_cost"
@@ -29,11 +29,3 @@
 		}}
 	/>
 </div>
-
-<style>
-	.chart-wrapper {
-		position: relative;
-		width: 100%;
-		height: 100%;
-	}
-</style>
