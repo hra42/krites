@@ -220,7 +220,10 @@ func (r *Runner) executeSingleCall(model string, prompt Prompt, iteration int, c
 		if result.Metrics.TotalLatency > 0 {
 			result.Metrics.TokensPerSecond = float64(resp.Usage.CompletionTokens) / (result.Metrics.TotalLatency / 1000.0)
 		}
-		if r.pricingCache != nil {
+		// Prefer actual cost from OpenRouter response over estimated cost
+		if resp.Usage.Cost > 0 {
+			result.Metrics.EstimatedCost = resp.Usage.Cost
+		} else if r.pricingCache != nil {
 			result.Metrics.EstimatedCost = r.pricingCache.EstimateCost(model, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 		}
 	}
