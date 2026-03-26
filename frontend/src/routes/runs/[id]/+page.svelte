@@ -72,85 +72,91 @@
 		return `${(ms / 1000).toFixed(1)}s`;
 	}
 
+	const statusDotColor: Record<string, string> = {
+		success: 'bg-success',
+		error: 'bg-error',
+		timeout: 'bg-warning'
+	};
+
 	const hasSummary = $derived(run?.summary && run.summary.models.length > 0);
 	const hasJudge = $derived(run?.config.judge_enabled && run?.config.judge_criteria?.length);
 	const criteria = $derived(run?.config.judge_criteria ?? []);
 	const models = $derived(run?.results ? [...new Set(run.results.map((r) => r.model))] : []);
 </script>
 
-<div class="page">
-	<a href="/runs" class="back">&larr; Back to Runs</a>
+<div>
+	<a href="/runs" class="text-[15px] text-text-muted hover:text-accent mb-4 inline-block">&larr; Back to Runs</a>
 
 	{#if loading}
-		<p class="loading">Loading run...</p>
+		<p class="text-text-muted text-center py-10">Loading run...</p>
 	{:else if error}
-		<div class="error-banner">{error}</div>
+		<div class="bg-error/10 border border-error rounded-[--radius] px-4 py-3 text-error">{error}</div>
 	{:else if run}
-		<div class="header">
+		<div class="flex justify-between items-start mb-6">
 			<div>
-				<h1>{run.suite_name}</h1>
-				<p class="run-id mono">{run.id}</p>
+				<h1 class="text-2xl mb-1">{run.suite_name}</h1>
+				<p class="text-sm text-text-dim mono">{run.id}</p>
 			</div>
-			<div class="header-actions">
+			<div class="flex items-center gap-2">
 				{#if run.status === 'complete' || run.status === 'failed'}
-					<a href={exportRunUrl(run.id, 'csv')} download class="btn btn-sm">CSV</a>
-					<a href={exportRunUrl(run.id, 'json')} download class="btn btn-sm">JSON</a>
+					<a href={exportRunUrl(run.id, 'csv')} download class="text-xs px-3 py-1 rounded-[6px] bg-bg-elevated border border-border text-text-muted no-underline transition-all duration-150 hover:border-accent hover:text-accent">CSV</a>
+					<a href={exportRunUrl(run.id, 'json')} download class="text-xs px-3 py-1 rounded-[6px] bg-bg-elevated border border-border text-text-muted no-underline transition-all duration-150 hover:border-accent hover:text-accent">JSON</a>
 				{/if}
 				<StatusBadge status={run.status} />
 			</div>
 		</div>
 
-		<div class="meta-grid">
-			<div class="meta-item">
-				<span class="meta-label">Started</span>
-				<span class="meta-value mono">{formatDate(run.started_at)}</span>
+		<div class="grid grid-cols-4 gap-3 mb-8">
+			<div class="bg-bg-card border border-border rounded-[--radius] px-4 py-3">
+				<span class="block text-sm text-text-muted uppercase tracking-wide mb-1">Started</span>
+				<span class="text-lg font-semibold mono">{formatDate(run.started_at)}</span>
 			</div>
-			<div class="meta-item">
-				<span class="meta-label">Ended</span>
-				<span class="meta-value mono">{formatDate(run.ended_at)}</span>
+			<div class="bg-bg-card border border-border rounded-[--radius] px-4 py-3">
+				<span class="block text-sm text-text-muted uppercase tracking-wide mb-1">Ended</span>
+				<span class="text-lg font-semibold mono">{formatDate(run.ended_at)}</span>
 			</div>
-			<div class="meta-item">
-				<span class="meta-label">Duration</span>
-				<span class="meta-value mono">{duration(run.started_at, run.ended_at)}</span>
+			<div class="bg-bg-card border border-border rounded-[--radius] px-4 py-3">
+				<span class="block text-sm text-text-muted uppercase tracking-wide mb-1">Duration</span>
+				<span class="text-lg font-semibold mono">{duration(run.started_at, run.ended_at)}</span>
 			</div>
-			<div class="meta-item">
-				<span class="meta-label">Results</span>
-				<span class="meta-value mono">{run.results?.length ?? 0}</span>
+			<div class="bg-bg-card border border-border rounded-[--radius] px-4 py-3">
+				<span class="block text-sm text-text-muted uppercase tracking-wide mb-1">Results</span>
+				<span class="text-lg font-semibold mono">{run.results?.length ?? 0}</span>
 			</div>
 		</div>
 
 		{#if run.results && run.results.length > 0}
 			<!-- Summary cards from backend -->
 			{#if hasSummary}
-				<section class="section">
-					<h2>Model Overview</h2>
-					<div class="summary-cards">
+				<section class="mb-8">
+					<h2 class="text-lg text-text-muted uppercase tracking-wide mb-3">Model Overview</h2>
+					<div class="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3">
 						{#each run.summary!.models as ms}
-							<div class="summary-card card">
-								<div class="summary-card-header">
+							<div class="card p-4">
+								<div class="flex justify-between items-center mb-3">
 									<ModelChip model={ms.model} />
-									<span class="success-rate mono">{(ms.success_rate * 100).toFixed(0)}%</span>
+									<span class="text-[15px] font-semibold text-success mono">{(ms.success_rate * 100).toFixed(0)}%</span>
 								</div>
-								<div class="summary-metrics">
-									<div class="summary-metric">
-										<span class="sm-label">Avg Latency</span>
-										<span class="sm-value mono">{ms.avg_latency_ms.toFixed(0)}ms</span>
+								<div class="grid grid-cols-2 gap-2 mb-2.5">
+									<div class="flex flex-col gap-0.5">
+										<span class="text-xs text-text-dim uppercase tracking-wide">Avg Latency</span>
+										<span class="text-base font-semibold mono">{ms.avg_latency_ms.toFixed(0)}ms</span>
 									</div>
-									<div class="summary-metric">
-										<span class="sm-label">P95 Latency</span>
-										<span class="sm-value mono">{ms.p95_latency_ms.toFixed(0)}ms</span>
+									<div class="flex flex-col gap-0.5">
+										<span class="text-xs text-text-dim uppercase tracking-wide">P95 Latency</span>
+										<span class="text-base font-semibold mono">{ms.p95_latency_ms.toFixed(0)}ms</span>
 									</div>
-									<div class="summary-metric">
-										<span class="sm-label">Avg tok/s</span>
-										<span class="sm-value mono">{ms.avg_tokens_per_second.toFixed(1)}</span>
+									<div class="flex flex-col gap-0.5">
+										<span class="text-xs text-text-dim uppercase tracking-wide">Avg tok/s</span>
+										<span class="text-base font-semibold mono">{ms.avg_tokens_per_second.toFixed(1)}</span>
 									</div>
-									<div class="summary-metric">
-										<span class="sm-label">Cost</span>
-										<span class="sm-value mono">${ms.total_cost.toFixed(4)}</span>
+									<div class="flex flex-col gap-0.5">
+										<span class="text-xs text-text-dim uppercase tracking-wide">Cost</span>
+										<span class="text-base font-semibold mono">${ms.total_cost.toFixed(4)}</span>
 									</div>
 								</div>
 								{#if ms.avg_judge_scores && Object.keys(ms.avg_judge_scores).length > 0}
-									<div class="summary-judges">
+									<div class="flex flex-wrap gap-1 pt-2 border-t border-border">
 										{#each Object.entries(ms.avg_judge_scores) as [criterion, score]}
 											<JudgeScoreBadge {criterion} {score} />
 										{/each}
@@ -162,27 +168,35 @@
 				</section>
 
 				<!-- Charts -->
-				<section class="section">
-					<h2>Visualizations</h2>
-					<div class="charts-grid">
-						<div class="chart-container">
-							<h3>Latency Comparison</h3>
-							<LatencyChart modelSummaries={run.summary!.models} />
+				<section class="mb-8">
+					<h2 class="text-lg text-text-muted uppercase tracking-wide mb-3">Visualizations</h2>
+					<div class="grid grid-cols-2 gap-4">
+						<div class="bg-bg-card border border-border rounded-[--radius-lg] p-5 h-[340px] flex flex-col">
+							<h3 class="text-[15px] text-text-muted uppercase tracking-wide mb-3 shrink-0">Latency Comparison</h3>
+							<div class="flex-1 min-h-0">
+								<LatencyChart modelSummaries={run.summary!.models} />
+							</div>
 						</div>
 						{#if hasJudge}
-							<div class="chart-container">
-								<h3>Judge-Scores</h3>
-								<JudgeRadarChart modelSummaries={run.summary!.models} {criteria} />
+							<div class="bg-bg-card border border-border rounded-[--radius-lg] p-5 h-[340px] flex flex-col">
+								<h3 class="text-[15px] text-text-muted uppercase tracking-wide mb-3 shrink-0">Judge-Scores</h3>
+								<div class="flex-1 min-h-0">
+									<JudgeRadarChart modelSummaries={run.summary!.models} {criteria} />
+								</div>
 							</div>
 						{/if}
-						<div class="chart-container">
-							<h3>Cost Comparison</h3>
-							<CostChart modelSummaries={run.summary!.models} />
+						<div class="bg-bg-card border border-border rounded-[--radius-lg] p-5 h-[340px] flex flex-col">
+							<h3 class="text-[15px] text-text-muted uppercase tracking-wide mb-3 shrink-0">Cost Comparison</h3>
+							<div class="flex-1 min-h-0">
+								<CostChart modelSummaries={run.summary!.models} />
+							</div>
 						</div>
 						{#if run.config.iterations > 1 && run.results}
-							<div class="chart-container">
-								<h3>Latency per Iteration</h3>
-								<IterationLineChart results={run.results} {models} />
+							<div class="bg-bg-card border border-border rounded-[--radius-lg] p-5 h-[340px] flex flex-col">
+								<h3 class="text-[15px] text-text-muted uppercase tracking-wide mb-3 shrink-0">Latency per Iteration</h3>
+								<div class="flex-1 min-h-0">
+									<IterationLineChart results={run.results} {models} />
+								</div>
 							</div>
 						{/if}
 					</div>
@@ -190,46 +204,46 @@
 			{/if}
 
 			<!-- Detailed model comparison table -->
-			<section class="section">
-				<h2>Model Comparison</h2>
-				<div class="table-wrapper">
+			<section class="mb-8">
+				<h2 class="text-lg text-text-muted uppercase tracking-wide mb-3">Model Comparison</h2>
+				<div class="overflow-x-auto">
 					{#if hasSummary}
-						<table>
+						<table class="w-full border-collapse">
 							<thead>
 								<tr>
-									<th>Model</th>
-									<th>Avg Latency</th>
-									<th>P50</th>
-									<th>P95</th>
-									<th>Avg tok/s</th>
-									<th>Success Rate</th>
-									<th>Avg Cost</th>
-									<th>Total</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Model</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Avg Latency</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">P50</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">P95</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Avg tok/s</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Success Rate</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Avg Cost</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Total</th>
 									{#if hasJudge}
 										{#each criteria as c}
-											<th>{c}</th>
+											<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">{c}</th>
 										{/each}
 									{/if}
 								</tr>
 							</thead>
 							<tbody>
 								{#each run.summary!.models as ms}
-									<tr>
-										<td><ModelChip model={ms.model} /></td>
-										<td class="mono">{ms.avg_latency_ms.toFixed(0)}ms</td>
-										<td class="mono">{ms.p50_latency_ms.toFixed(0)}ms</td>
-										<td class="mono">{ms.p95_latency_ms.toFixed(0)}ms</td>
-										<td class="mono">{ms.avg_tokens_per_second.toFixed(1)}</td>
-										<td class="mono">{(ms.success_rate * 100).toFixed(0)}%</td>
-										<td class="mono">${ms.avg_cost.toFixed(4)}</td>
-										<td class="mono">${ms.total_cost.toFixed(4)}</td>
+									<tr class="hover:bg-bg-elevated">
+										<td class="px-3 py-2.5 border-b border-border text-[15px]"><ModelChip model={ms.model} /></td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{ms.avg_latency_ms.toFixed(0)}ms</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{ms.p50_latency_ms.toFixed(0)}ms</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{ms.p95_latency_ms.toFixed(0)}ms</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{ms.avg_tokens_per_second.toFixed(1)}</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{(ms.success_rate * 100).toFixed(0)}%</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">${ms.avg_cost.toFixed(4)}</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">${ms.total_cost.toFixed(4)}</td>
 										{#if hasJudge}
 											{#each criteria as c}
-												<td>
+												<td class="px-3 py-2.5 border-b border-border text-[15px]">
 													{#if ms.avg_judge_scores?.[c]}
 														<JudgeScoreBadge criterion={c} score={ms.avg_judge_scores[c]} />
 													{:else}
-														<span class="text-dim">-</span>
+														<span class="text-text-dim">-</span>
 													{/if}
 												</td>
 											{/each}
@@ -240,25 +254,25 @@
 						</table>
 					{:else}
 						<!-- Fallback: client-side computed -->
-						<table>
+						<table class="w-full border-collapse">
 							<thead>
 								<tr>
-									<th>Model</th>
-									<th>Avg Latency</th>
-									<th>Avg tok/s</th>
-									<th>Success Rate</th>
-									<th>Total Tokens</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Model</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Avg Latency</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Avg tok/s</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Success Rate</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Total Tokens</th>
 								</tr>
 							</thead>
 							<tbody>
 								{#each Object.entries(groupByModel(run.results)) as [model, results]}
 									{@const stats = fallbackModelStats(results)}
-									<tr>
-										<td><ModelChip {model} /></td>
-										<td class="mono">{stats.avgLatency.toFixed(0)}ms</td>
-										<td class="mono">{stats.avgToksPerSec.toFixed(1)}</td>
-										<td class="mono">{stats.successRate.toFixed(0)}%</td>
-										<td class="mono">{stats.totalTokens}</td>
+									<tr class="hover:bg-bg-elevated">
+										<td class="px-3 py-2.5 border-b border-border text-[15px]"><ModelChip {model} /></td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{stats.avgLatency.toFixed(0)}ms</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{stats.avgToksPerSec.toFixed(1)}</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{stats.successRate.toFixed(0)}%</td>
+										<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{stats.totalTokens}</td>
 									</tr>
 								{/each}
 							</tbody>
@@ -268,46 +282,46 @@
 			</section>
 
 			<!-- All results -->
-			<section class="section">
-				<h2>All Results</h2>
-				<div class="table-wrapper">
-					<table class="results-table">
+			<section class="mb-8">
+				<h2 class="text-lg text-text-muted uppercase tracking-wide mb-3">All Results</h2>
+				<div class="overflow-x-auto">
+					<table class="w-full border-collapse">
 						<thead>
 							<tr>
-								<th>Model</th>
-								<th>Prompt</th>
-								<th>#</th>
-								<th>Status</th>
-								<th>Latency</th>
-								<th>tok/s</th>
-								<th>Tokens</th>
+								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Model</th>
+								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Prompt</th>
+								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">#</th>
+								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Status</th>
+								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Latency</th>
+								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">tok/s</th>
+								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Tokens</th>
 								{#if hasJudge}
-									<th>Judge</th>
+									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Judge</th>
 								{/if}
 							</tr>
 						</thead>
 						<tbody>
 							{#each run.results as result}
-								<tr class:error-row={result.status !== 'success'}>
-									<td class="mono model-cell">{result.model.split('/').pop()}</td>
-									<td>{result.prompt_name || '-'}</td>
-									<td class="mono">{result.iteration}</td>
-									<td>
-										<span class="status-dot {result.status}"></span>
+								<tr class="hover:bg-bg-elevated {result.status !== 'success' ? 'opacity-60' : ''}">
+									<td class="px-3 py-2.5 border-b border-border text-sm max-w-30 overflow-hidden text-ellipsis mono">{result.model.split('/').pop()}</td>
+									<td class="px-3 py-2.5 border-b border-border text-[15px]">{result.prompt_name || '-'}</td>
+									<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{result.iteration}</td>
+									<td class="px-3 py-2.5 border-b border-border">
+										<span class="inline-block w-2 h-2 rounded-full {statusDotColor[result.status] || 'bg-text-muted'}"></span>
 									</td>
-									<td class="mono">{result.metrics.total_latency_ms.toFixed(0)}ms</td>
-									<td class="mono">{result.metrics.tokens_per_second.toFixed(1)}</td>
-									<td class="mono">{result.metrics.completion_tokens}</td>
+									<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{result.metrics.total_latency_ms.toFixed(0)}ms</td>
+									<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{result.metrics.tokens_per_second.toFixed(1)}</td>
+									<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{result.metrics.completion_tokens}</td>
 									{#if hasJudge}
-										<td>
+										<td class="px-3 py-2.5 border-b border-border">
 											{#if result.judge_scores?.length}
-												<div class="judge-badges-row">
+												<div class="flex flex-wrap gap-1">
 													{#each result.judge_scores as js}
 														<JudgeScoreBadge criterion={js.criterion} score={js.score} />
 													{/each}
 												</div>
 											{:else}
-												<span class="text-dim">-</span>
+												<span class="text-text-dim">-</span>
 											{/if}
 										</td>
 									{/if}
@@ -318,279 +332,9 @@
 				</div>
 			</section>
 		{:else}
-			<div class="empty card">
+			<div class="card text-center py-10 text-text-muted">
 				<p>No results available.</p>
 			</div>
 		{/if}
 	{/if}
 </div>
-
-<style>
-	.back {
-		font-size: 13px;
-		color: var(--color-text-muted);
-		margin-bottom: 16px;
-		display: inline-block;
-	}
-
-	.back:hover {
-		color: var(--color-accent);
-	}
-
-	.header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		margin-bottom: 24px;
-	}
-
-	.header-actions {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.btn-sm {
-		font-size: 12px;
-		padding: 4px 12px;
-		border-radius: 6px;
-		background: var(--color-elevated);
-		border: 1px solid var(--color-border);
-		color: var(--color-text-muted);
-		text-decoration: none;
-		transition: all 0.15s ease;
-	}
-
-	.btn-sm:hover {
-		border-color: var(--color-accent);
-		color: var(--color-accent);
-	}
-
-	h1 {
-		font-size: 22px;
-		margin-bottom: 4px;
-	}
-
-	.run-id {
-		font-size: 12px;
-		color: var(--color-text-dim);
-	}
-
-	.meta-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 12px;
-		margin-bottom: 32px;
-	}
-
-	.meta-item {
-		background: var(--color-bg-card);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius);
-		padding: 12px 16px;
-	}
-
-	.meta-label {
-		display: block;
-		font-size: 11px;
-		color: var(--color-text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 4px;
-	}
-
-	.meta-value {
-		font-size: 15px;
-		font-weight: 600;
-	}
-
-	.section {
-		margin-bottom: 32px;
-	}
-
-	.section h2 {
-		font-size: 16px;
-		color: var(--color-text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 12px;
-	}
-
-	/* Summary cards */
-	.summary-cards {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-		gap: 12px;
-	}
-
-	.summary-card {
-		padding: 16px;
-	}
-
-	.summary-card-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 12px;
-	}
-
-	.success-rate {
-		font-size: 13px;
-		font-weight: 600;
-		color: var(--color-success);
-	}
-
-	.summary-metrics {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 8px;
-		margin-bottom: 10px;
-	}
-
-	.summary-metric {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.sm-label {
-		font-size: 10px;
-		color: var(--color-text-dim);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.sm-value {
-		font-size: 14px;
-		font-weight: 600;
-	}
-
-	.summary-judges {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px;
-		padding-top: 8px;
-		border-top: 1px solid var(--color-border);
-	}
-
-	/* Charts */
-	.charts-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 16px;
-	}
-
-	.chart-container {
-		background: var(--color-bg-card);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		padding: 20px;
-		height: 340px;
-		display: flex;
-		flex-direction: column;
-	}
-
-	.chart-container h3 {
-		font-size: 13px;
-		color: var(--color-text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 12px;
-		flex-shrink: 0;
-	}
-
-	.chart-container :global(.chart-wrapper) {
-		flex: 1;
-		min-height: 0;
-	}
-
-	/* Tables */
-	.table-wrapper {
-		overflow-x: auto;
-	}
-
-	table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	th {
-		text-align: left;
-		font-size: 11px;
-		color: var(--color-text-dim);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		padding: 8px 12px;
-		border-bottom: 1px solid var(--color-border);
-	}
-
-	td {
-		padding: 10px 12px;
-		border-bottom: 1px solid var(--color-border);
-		font-size: 13px;
-	}
-
-	tr:hover {
-		background: var(--color-bg-elevated);
-	}
-
-	.error-row {
-		opacity: 0.6;
-	}
-
-	.model-cell {
-		font-size: 12px;
-		max-width: 120px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.status-dot {
-		display: inline-block;
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-	}
-
-	.status-dot.success {
-		background: var(--color-success);
-	}
-
-	.status-dot.error {
-		background: var(--color-error);
-	}
-
-	.status-dot.timeout {
-		background: var(--color-warning);
-	}
-
-	.judge-badges-row {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px;
-	}
-
-	.text-dim {
-		color: var(--color-text-dim);
-	}
-
-	.loading {
-		color: var(--color-text-muted);
-		text-align: center;
-		padding: 40px;
-	}
-
-	.error-banner {
-		background: rgba(248, 113, 113, 0.1);
-		border: 1px solid var(--color-error);
-		border-radius: var(--radius);
-		padding: 12px 16px;
-		color: var(--color-error);
-	}
-
-	.empty {
-		text-align: center;
-		padding: 40px;
-		color: var(--color-text-muted);
-	}
-</style>

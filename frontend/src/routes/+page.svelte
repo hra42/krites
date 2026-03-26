@@ -16,121 +16,41 @@
 	});
 </script>
 
-<div class="dashboard">
-	<h1>Dashboard</h1>
-	<p class="subtitle">LLM Benchmark Platform</p>
+<div>
+	<h1 class="text-3xl mb-1">Dashboard</h1>
+	<p class="text-text-muted mb-8">LLM Benchmark Platform</p>
 
-	<div class="stats">
-		<div class="stat-card card">
-			<span class="stat-value mono">{$suites.length}</span>
-			<span class="stat-label">Suites</span>
+	<div class="grid grid-cols-3 gap-4 mb-8">
+		<div class="card flex flex-col gap-1 text-center p-6">
+			<span class="text-[32px] font-bold text-accent mono">{$suites.length}</span>
+			<span class="text-sm text-text-muted uppercase tracking-wide">Suites</span>
 		</div>
-		<div class="stat-card card">
-			<span class="stat-value mono">{overview?.total_runs ?? 0}</span>
-			<span class="stat-label">Runs</span>
+		<div class="card flex flex-col gap-1 text-center p-6">
+			<span class="text-[32px] font-bold text-accent mono">{overview?.total_runs ?? 0}</span>
+			<span class="text-sm text-text-muted uppercase tracking-wide">Runs</span>
 		</div>
-		<div class="stat-card card">
-			<span class="stat-value mono">{overview?.completed_runs ?? 0}</span>
-			<span class="stat-label">Completed</span>
+		<div class="card flex flex-col gap-1 text-center p-6">
+			<span class="text-[32px] font-bold text-accent mono">{overview?.completed_runs ?? 0}</span>
+			<span class="text-sm text-text-muted uppercase tracking-wide">Completed</span>
 		</div>
 	</div>
 
-	<div class="actions">
+	<div class="mb-10">
 		<a href="/suites" class="btn btn-primary">Create New Suite</a>
-		<a href="/analytics" class="btn" style="margin-left: 8px;">Analytics</a>
+		<a href="/analytics" class="btn ml-2">Analytics</a>
 	</div>
 
 	{#if $suites.length > 0}
-		<div class="recent">
-			<h2>Recent Suites</h2>
-			<div class="recent-list">
+		<div class="mt-4">
+			<h2 class="text-xl mb-3">Recent Suites</h2>
+			<div class="flex flex-col gap-2">
 				{#each $suites.slice(0, 5) as suite}
-					<a href="/suites/{suite.id}" class="recent-item card">
-						<span class="recent-name">{suite.name}</span>
-						<span class="recent-meta mono">{suite.model_count} Models &middot; {suite.prompt_count} Prompts</span>
+					<a href="/suites/{suite.id}" class="card flex justify-between items-center py-3.5 px-5 text-text hover:border-accent">
+						<span class="font-medium">{suite.name}</span>
+						<span class="text-sm text-text-muted mono">{suite.model_count} Models &middot; {suite.prompt_count} Prompts</span>
 					</a>
 				{/each}
 			</div>
 		</div>
 	{/if}
 </div>
-
-<style>
-	h1 {
-		font-size: 28px;
-		margin-bottom: 4px;
-	}
-
-	.subtitle {
-		color: var(--color-text-muted);
-		margin-bottom: 32px;
-	}
-
-	.stats {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 16px;
-		margin-bottom: 32px;
-	}
-
-	.stat-card {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		text-align: center;
-		padding: 24px;
-	}
-
-	.stat-value {
-		font-size: 32px;
-		font-weight: 700;
-		color: var(--color-accent);
-	}
-
-	.stat-label {
-		font-size: 12px;
-		color: var(--color-text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.actions {
-		margin-bottom: 40px;
-	}
-
-	.recent {
-		margin-top: 16px;
-	}
-
-	.recent h2 {
-		font-size: 18px;
-		margin-bottom: 12px;
-	}
-
-	.recent-list {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.recent-item {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 14px 20px;
-		color: var(--color-text);
-	}
-
-	.recent-item:hover {
-		border-color: var(--color-accent);
-	}
-
-	.recent-name {
-		font-weight: 500;
-	}
-
-	.recent-meta {
-		font-size: 12px;
-		color: var(--color-text-muted);
-	}
-</style>
