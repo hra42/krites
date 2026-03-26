@@ -297,10 +297,6 @@
 {/if}
 
 <style>
-	.page {
-		max-width: 800px;
-	}
-
 	.header {
 		display: flex;
 		justify-content: space-between;

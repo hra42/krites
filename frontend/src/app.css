@@ -1,7 +1,11 @@
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/utilities' layer(utilities);
 @import '@fontsource/jetbrains-mono';
 @import '@fontsource/outfit';
 
-:root {
+@source "../node_modules/layerchart/**/*.{svelte,js}";
+
+@theme {
 	--color-bg: #0c0b0e;
 	--color-bg-elevated: #16141a;
 	--color-bg-card: #1e1c23;
@@ -23,6 +27,24 @@
 	--radius: 8px;
 	--radius-sm: 4px;
 	--radius-lg: 12px;
+
+	/* Chart model colors */
+	--color-model-0: #a78bfa;
+	--color-model-1: #34d399;
+	--color-model-2: #fbbf24;
+	--color-model-3: #f87171;
+	--color-model-4: #38bdf8;
+	--color-model-5: #fb923c;
+	--color-model-6: #a3e635;
+	--color-model-7: #e879f9;
+}
+
+/* layerchart surface variables for dark theme */
+:root {
+	--color-surface-100: #1e1c23;
+	--color-surface-200: #2a2830;
+	--color-surface-300: #2a2830;
+	--color-surface-content: #8b8894;
 }
 
 *,

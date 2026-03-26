@@ -72,10 +72,6 @@
 </div>
 
 <style>
-	.page {
-		max-width: 900px;
-	}
-
 	h1 {
 		font-size: 22px;
 		margin-bottom: 24px;

@@ -188,10 +188,6 @@
 </div>
 
 <style>
-	.page {
-		max-width: 1400px;
-	}
-
 	h1 {
 		font-size: 28px;
 		margin-bottom: 4px;

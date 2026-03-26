@@ -326,10 +326,6 @@
 </div>
 
 <style>
-	.page {
-		max-width: 1400px;
-	}
-
 	.back {
 		font-size: 13px;
 		color: var(--color-text-muted);

@@ -1,19 +1,7 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import {
-		Chart,
-		CategoryScale,
-		LinearScale,
-		PointElement,
-		LineElement,
-		Title,
-		Tooltip,
-		Legend
-	} from 'chart.js';
+	import { LineChart } from 'layerchart';
 	import type { Result } from '$lib/types';
-	import { getModelColor } from '$lib/utils/chart-theme';
-
-	Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+	import { getModelColor } from '$lib/utils/chart-colors';
 
 	interface Props {
 		results: Result[];
@@ -21,96 +9,53 @@
 	}
 
 	let { results, models }: Props = $props();
-	let canvas: HTMLCanvasElement;
-	let chart: Chart | null = null;
 
-	onMount(() => {
+	const chartData = $derived.by(() => {
 		const successful = results.filter((r) => r.status === 'success');
-		if (successful.length === 0) return;
+		if (successful.length === 0) return [];
 
 		const maxIter = Math.max(...successful.map((r) => r.iteration));
-		const labels = Array.from({ length: maxIter }, (_, i) => `${i + 1}`);
+		const rows: Record<string, unknown>[] = [];
 
-		const datasets = models.map((model, colorIdx) => {
-			const modelResults = successful.filter((r) => r.model === model);
-			const iterData: (number | null)[] = [];
-
-			for (let iter = 1; iter <= maxIter; iter++) {
-				const iterResults = modelResults.filter((r) => r.iteration === iter);
-				if (iterResults.length === 0) {
-					iterData.push(null);
-				} else {
-					const avg =
+		for (let iter = 1; iter <= maxIter; iter++) {
+			const row: Record<string, unknown> = { iteration: `${iter}` };
+			for (const model of models) {
+				const key = model.split('/').pop() || model;
+				const iterResults = successful.filter((r) => r.model === model && r.iteration === iter);
+				if (iterResults.length > 0) {
+					row[key] =
 						iterResults.reduce((sum, r) => sum + r.metrics.total_latency_ms, 0) /
 						iterResults.length;
-					iterData.push(avg);
 				}
 			}
-
-			return {
-				label: model.split('/').pop() || model,
-				data: iterData,
-				borderColor: getModelColor(colorIdx),
-				backgroundColor: getModelColor(colorIdx),
-				borderWidth: 2,
-				pointRadius: 4,
-				tension: 0.2,
-				spanGaps: true
-			};
-		});
-
-		chart = new Chart(canvas, {
-			type: 'line',
-			data: { labels, datasets },
-			options: {
-				responsive: true,
-				maintainAspectRatio: false,
-				scales: {
-					x: {
-						ticks: { color: '#5a5766' },
-						grid: { color: '#2a2830' },
-						title: {
-							display: true,
-							text: 'Iteration',
-							color: '#8b8894'
-						}
-					},
-					y: {
-						ticks: { color: '#5a5766' },
-						grid: { color: '#2a2830' },
-						title: {
-							display: true,
-							text: 'Latency (ms)',
-							color: '#8b8894'
-						}
-					}
-				},
-				plugins: {
-					legend: {
-						labels: {
-							color: '#8b8894',
-							font: { family: "'JetBrains Mono', monospace", size: 11 }
-						}
-					},
-					tooltip: {
-						backgroundColor: '#1e1c23',
-						titleColor: '#e4e2e8',
-						bodyColor: '#8b8894',
-						borderColor: '#2a2830',
-						borderWidth: 1
-					}
-				}
-			}
-		});
+			rows.push(row);
+		}
+		return rows;
 	});
 
-	onDestroy(() => {
-		chart?.destroy();
-	});
+	const series = $derived(
+		models.map((model, i) => ({
+			key: model.split('/').pop() || model,
+			label: model.split('/').pop() || model,
+			color: getModelColor(i)
+		}))
+	);
 </script>
 
 <div class="chart-wrapper">
-	<canvas bind:this={canvas}></canvas>
+	{#if chartData.length > 0}
+		<LineChart
+			data={chartData}
+			x="iteration"
+			padding={{ left: 56, top: 8, bottom: 36, right: 16 }}
+			{series}
+			legend
+			points
+			props={{
+				yAxis: { format: (d: number) => `${d.toFixed(0)}ms` }
+			}}
+		/>
+	{/if}
 </div>
 
 <style>

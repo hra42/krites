@@ -181,10 +181,6 @@
 </div>
 
 <style>
-	.page {
-		max-width: 900px;
-	}
-
 	.header {
 		display: flex;
 		justify-content: space-between;

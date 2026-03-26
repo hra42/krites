@@ -56,10 +56,6 @@
 </div>
 
 <style>
-	.dashboard {
-		max-width: 800px;
-	}
-
 	h1 {
 		font-size: 28px;
 		margin-bottom: 4px;
