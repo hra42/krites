@@ -4,6 +4,7 @@
 	import JudgeRadarChart from '$lib/components/charts/JudgeRadarChart.svelte';
 	import CostChart from '$lib/components/charts/CostChart.svelte';
 	import IterationLineChart from '$lib/components/charts/IterationLineChart.svelte';
+	import { renderMarkdown } from '$lib/utils/markdown';
 
 	interface Props {
 		run: Run;
@@ -296,8 +297,12 @@
 					</header>
 					{#if r.status !== 'success'}
 						<pre class="response-body error-body">{r.error || '(no error message)'}</pre>
+					{:else if r.response}
+						<div class="response-body markdown-body">
+							{@html renderMarkdown(r.response)}
+						</div>
 					{:else}
-						<pre class="response-body">{r.response || '(empty response)'}</pre>
+						<pre class="response-body">(empty response)</pre>
 					{/if}
 					{#if r.judge_scores?.length}
 						<div class="judge-block">
@@ -772,10 +777,14 @@
 
 	/* ---------- responses ---------- */
 	.response {
-		margin-bottom: 18px;
-		padding-bottom: 16px;
+		margin-bottom: 22px;
+		padding-bottom: 18px;
 		border-bottom: 1px solid #ececec;
+		/* Allow long responses to split across pages — the inner atoms
+		   (p, li, h*, pre) carry the avoid rules so breaks land at
+		   paragraph boundaries instead of mid-line. */
 		page-break-inside: auto;
+		break-inside: auto;
 	}
 
 	.response:last-child {
@@ -783,8 +792,11 @@
 	}
 
 	.response-head {
-		margin-bottom: 8px;
+		margin-bottom: 10px;
+		/* Keep header glued to the first content block so we don't get
+		   an orphan heading at the bottom of a page. */
 		page-break-after: avoid;
+		break-after: avoid;
 	}
 
 	h3 {
@@ -814,11 +826,20 @@
 		border: 1px solid #ececec;
 		border-left: 3px solid #7c3aed;
 		border-radius: 4px;
-		padding: 10px 12px;
+		padding: 12px 14px;
 		white-space: pre-wrap;
 		word-break: break-word;
 		margin: 0;
 		color: #1a1a1a;
+	}
+
+	.markdown-body {
+		font-family: 'Outfit', system-ui, sans-serif;
+		font-size: 10.5px;
+		line-height: 1.6;
+		white-space: normal;
+		word-break: normal;
+		overflow-wrap: anywhere;
 	}
 
 	.error-body {
@@ -826,6 +847,131 @@
 		border-color: #f5d6d6;
 		border-left-color: #dc2626;
 		color: #8a1f1f;
+	}
+
+	/* ---------- markdown atoms (PDF) ----------
+	   Per html2pdf.js issues, page-break-inside: avoid on the wrapper
+	   stops working past ~20 pages. Apply it to small atoms instead so
+	   breaks fall between paragraphs/list items, never mid-line. */
+	.markdown-body :global(> *:first-child) {
+		margin-top: 0;
+	}
+	.markdown-body :global(> *:last-child) {
+		margin-bottom: 0;
+	}
+	.markdown-body :global(p) {
+		margin: 0.5em 0;
+		page-break-inside: avoid;
+		break-inside: avoid;
+		orphans: 3;
+		widows: 3;
+	}
+	.markdown-body :global(h1),
+	.markdown-body :global(h2),
+	.markdown-body :global(h3),
+	.markdown-body :global(h4),
+	.markdown-body :global(h5),
+	.markdown-body :global(h6) {
+		font-weight: 600;
+		line-height: 1.25;
+		color: #0a0a0a;
+		margin: 0.9em 0 0.35em 0;
+		page-break-after: avoid;
+		break-after: avoid;
+		page-break-inside: avoid;
+		break-inside: avoid;
+	}
+	.markdown-body :global(h1) {
+		font-size: 1.35em;
+	}
+	.markdown-body :global(h2) {
+		font-size: 1.2em;
+	}
+	.markdown-body :global(h3) {
+		font-size: 1.08em;
+	}
+	.markdown-body :global(ul),
+	.markdown-body :global(ol) {
+		margin: 0.5em 0;
+		padding-left: 1.5em;
+	}
+	.markdown-body :global(li) {
+		margin: 0.2em 0;
+		page-break-inside: avoid;
+		break-inside: avoid;
+	}
+	.markdown-body :global(strong) {
+		font-weight: 600;
+		color: #0a0a0a;
+	}
+	.markdown-body :global(em) {
+		font-style: italic;
+	}
+	.markdown-body :global(a) {
+		color: #5b21b6;
+		text-decoration: underline;
+	}
+	.markdown-body :global(code) {
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 0.9em;
+		padding: 1px 4px;
+		background: #f3f0fb;
+		border-radius: 3px;
+		color: #5b21b6;
+	}
+	.markdown-body :global(pre) {
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 9px;
+		line-height: 1.5;
+		background: #f5f5f5;
+		border: 1px solid #e5e5e5;
+		border-radius: 4px;
+		padding: 8px 10px;
+		margin: 0.6em 0;
+		white-space: pre-wrap;
+		word-break: break-word;
+		page-break-inside: avoid;
+		break-inside: avoid;
+	}
+	.markdown-body :global(pre code) {
+		background: transparent;
+		padding: 0;
+		color: inherit;
+		font-size: inherit;
+	}
+	.markdown-body :global(blockquote) {
+		margin: 0.5em 0;
+		padding: 0.1em 0 0.1em 0.9em;
+		border-left: 2px solid #d8d8d8;
+		color: #555;
+		page-break-inside: avoid;
+		break-inside: avoid;
+	}
+	.markdown-body :global(hr) {
+		border: none;
+		border-top: 1px solid #e5e5e5;
+		margin: 0.8em 0;
+	}
+	.markdown-body :global(table) {
+		border-collapse: collapse;
+		margin: 0.5em 0;
+		font-size: 9.5px;
+		page-break-inside: avoid;
+		break-inside: avoid;
+	}
+	.markdown-body :global(th),
+	.markdown-body :global(td) {
+		border: 1px solid #e5e5e5;
+		padding: 4px 8px;
+		text-align: left;
+	}
+	.markdown-body :global(th) {
+		background: #fafafa;
+		font-weight: 600;
+	}
+	.markdown-body :global(img) {
+		max-width: 100%;
+		height: auto;
 	}
 
 	.judge-block {

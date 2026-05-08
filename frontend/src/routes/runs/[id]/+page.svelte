@@ -12,6 +12,7 @@
 	import IterationLineChart from '$lib/components/charts/IterationLineChart.svelte';
 	import RunPdfReport from '$lib/components/RunPdfReport.svelte';
 	import { toastInfo, toastSuccess, toastError } from '$lib/stores/toast';
+	import { renderMarkdown } from '$lib/utils/markdown';
 
 	let { data } = $props();
 	let run = $state<Run | null>(null);
@@ -124,7 +125,27 @@
 						removeContainer: true
 					},
 					jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-					pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.chart-card', '.kpi', '.response-head'] }
+					pagebreak: {
+						mode: ['css', 'legacy'],
+						// Targeted avoid list. avoid-all is unreliable past ~20 pages
+						// (eKoopmans/html2pdf.js#227, #675), so we only protect atoms
+						// that should never split mid-element.
+						avoid: [
+							'tr',
+							'.chart-card',
+							'.kpi',
+							'.response-head',
+							'.markdown-body p',
+							'.markdown-body li',
+							'.markdown-body h1',
+							'.markdown-body h2',
+							'.markdown-body h3',
+							'.markdown-body h4',
+							'.markdown-body pre',
+							'.markdown-body blockquote',
+							'.judge-row'
+						]
+					}
 				})
 				.save();
 			toastSuccess('PDF downloaded');
@@ -375,8 +396,12 @@
 							</header>
 							{#if result.status !== 'success'}
 								<pre class="bg-bg-elevated border border-error/40 border-l-4 border-l-error rounded-[--radius] p-3 text-sm text-error font-mono whitespace-pre-wrap break-words m-0">{result.error || '(no error message)'}</pre>
+							{:else if result.response}
+								<div class="markdown bg-bg-elevated border border-border border-l-4 border-l-accent rounded-[--radius] p-4">
+									{@html renderMarkdown(result.response)}
+								</div>
 							{:else}
-								<pre class="bg-bg-elevated border border-border border-l-4 border-l-accent rounded-[--radius] p-3 text-sm font-mono whitespace-pre-wrap break-words m-0">{result.response || '(empty response)'}</pre>
+								<pre class="bg-bg-elevated border border-border border-l-4 border-l-accent rounded-[--radius] p-3 text-sm font-mono whitespace-pre-wrap break-words m-0 text-text-dim">(empty response)</pre>
 							{/if}
 							{#if result.judge_scores?.length}
 								<div class="mt-3 pt-3 border-t border-border flex flex-col gap-2">
@@ -404,3 +429,123 @@
 		{/if}
 	{/if}
 </div>
+
+<style>
+	/* Rendered markdown inside response cards. Mirrors app's dark theme. */
+	.markdown :global(> *:first-child) {
+		margin-top: 0;
+	}
+	.markdown :global(> *:last-child) {
+		margin-bottom: 0;
+	}
+	.markdown :global(h1),
+	.markdown :global(h2),
+	.markdown :global(h3),
+	.markdown :global(h4),
+	.markdown :global(h5),
+	.markdown :global(h6) {
+		font-weight: 600;
+		line-height: 1.25;
+		margin: 1em 0 0.5em 0;
+		color: var(--color-text);
+	}
+	.markdown :global(h1) {
+		font-size: 1.4em;
+	}
+	.markdown :global(h2) {
+		font-size: 1.25em;
+	}
+	.markdown :global(h3) {
+		font-size: 1.1em;
+	}
+	.markdown :global(h4),
+	.markdown :global(h5),
+	.markdown :global(h6) {
+		font-size: 1em;
+	}
+	.markdown :global(p) {
+		margin: 0.6em 0;
+		line-height: 1.6;
+	}
+	.markdown :global(ul),
+	.markdown :global(ol) {
+		margin: 0.6em 0;
+		padding-left: 1.5em;
+	}
+	.markdown :global(li) {
+		margin: 0.25em 0;
+		line-height: 1.55;
+	}
+	.markdown :global(li > ul),
+	.markdown :global(li > ol) {
+		margin: 0.25em 0;
+	}
+	.markdown :global(strong) {
+		font-weight: 600;
+		color: var(--color-text);
+	}
+	.markdown :global(em) {
+		font-style: italic;
+	}
+	.markdown :global(a) {
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+	.markdown :global(code) {
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 0.9em;
+		padding: 1px 5px;
+		background: rgba(167, 139, 250, 0.12);
+		border-radius: 4px;
+		color: var(--color-accent);
+	}
+	.markdown :global(pre) {
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 0.9em;
+		background: rgba(0, 0, 0, 0.25);
+		border: 1px solid var(--color-border);
+		border-radius: 6px;
+		padding: 10px 12px;
+		margin: 0.8em 0;
+		overflow-x: auto;
+		white-space: pre;
+	}
+	.markdown :global(pre code) {
+		background: transparent;
+		padding: 0;
+		color: inherit;
+		font-size: inherit;
+	}
+	.markdown :global(blockquote) {
+		margin: 0.6em 0;
+		padding: 0.2em 0 0.2em 1em;
+		border-left: 3px solid var(--color-border);
+		color: var(--color-text-muted);
+	}
+	.markdown :global(hr) {
+		border: none;
+		border-top: 1px solid var(--color-border);
+		margin: 1em 0;
+	}
+	.markdown :global(table) {
+		border-collapse: collapse;
+		margin: 0.8em 0;
+		font-size: 0.95em;
+	}
+	.markdown :global(th),
+	.markdown :global(td) {
+		border: 1px solid var(--color-border);
+		padding: 6px 10px;
+		text-align: left;
+	}
+	.markdown :global(th) {
+		background: rgba(255, 255, 255, 0.04);
+		font-weight: 600;
+	}
+	.markdown :global(img) {
+		max-width: 100%;
+		height: auto;
+		border-radius: 4px;
+	}
+</style>
