@@ -7,11 +7,12 @@
 	import PromptEditor from '$lib/components/PromptEditor.svelte';
 
 	let showForm = $state(false);
+	let advanced = $state(false);
 	let name = $state('');
 	let description = $state('');
 	let models = $state<string[]>([]);
 	let prompts = $state<Omit<Prompt, 'id'>[]>([
-		{ name: '', system_message: '', user_message: '', expected_output: '', category: '' }
+		{ name: '', system_message: '', user_message: '', expected_output: '' }
 	]);
 	let temperature = $state(0.7);
 	let maxTokens = $state(1024);
@@ -26,10 +27,11 @@
 	});
 
 	function resetForm() {
+		advanced = false;
 		name = '';
 		description = '';
 		models = [];
-		prompts = [{ name: '', system_message: '', user_message: '', expected_output: '', category: '' }];
+		prompts = [{ name: '', system_message: '', user_message: '', expected_output: '' }];
 		temperature = 0.7;
 		maxTokens = 1024;
 		iterations = 1;
@@ -45,10 +47,15 @@
 			.map((c) => c.trim())
 			.filter(Boolean);
 
+		const namedPrompts = prompts.map((p, i) => ({
+			...p,
+			name: p.name?.trim() || `Prompt ${i + 1}`
+		}));
+
 		const suite = await createNewSuite({
 			name,
 			description,
-			prompts,
+			prompts: namedPrompts,
 			models,
 			config: {
 				temperature,
@@ -88,67 +95,81 @@
 			<h2 class="text-xl mb-5">Create New Suite</h2>
 
 			<div class="mb-6 pb-6 border-b border-border">
-				<div class="mb-3">
-					<label class="label" for="suite-name">Name *</label>
-					<input id="suite-name" class="input" bind:value={name} placeholder="e.g. GPT vs Claude comparison" required />
-				</div>
-				<div>
-					<label class="label" for="suite-desc">Description</label>
-					<textarea id="suite-desc" class="input" bind:value={description} placeholder="Brief description of the suite..." rows="2"></textarea>
-				</div>
+				<label class="label" for="suite-name">Name *</label>
+				<input id="suite-name" class="input" bind:value={name} placeholder="e.g. GPT vs Claude comparison" required />
 			</div>
 
 			<div class="mb-6 pb-6 border-b border-border">
-				<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">Models</h3>
+				<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">Models *</h3>
 				<ModelPicker selected={models} onchange={(m) => (models = m)} />
 			</div>
 
 			<div class="mb-6 pb-6 border-b border-border">
-				<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">Prompts</h3>
-				<PromptEditor bind:prompts />
-			</div>
-
-			<div class="mb-6 pb-6 border-b border-border">
-				<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">Configuration</h3>
-				<div class="grid grid-cols-2 gap-3">
-					<div class="mb-3">
-						<label class="label" for="cfg-temp">Temperature</label>
-						<input id="cfg-temp" type="number" class="input mono" bind:value={temperature} min="0" max="2" step="0.1" />
-					</div>
-					<div class="mb-3">
-						<label class="label" for="cfg-tokens">Max Tokens</label>
-						<input id="cfg-tokens" type="number" class="input mono" bind:value={maxTokens} min="1" max="32768" />
-					</div>
-					<div class="mb-3">
-						<label class="label" for="cfg-iter">Iterations</label>
-						<input id="cfg-iter" type="number" class="input mono" bind:value={iterations} min="1" max="100" />
-					</div>
-					<div class="mb-3">
-						<label class="label" for="cfg-conc">Parallelism</label>
-						<input id="cfg-conc" type="number" class="input mono" bind:value={concurrency} min="1" max="20" />
-					</div>
-				</div>
+				<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">Prompts *</h3>
+				<PromptEditor bind:prompts {advanced} />
 			</div>
 
 			<div class="mb-4">
-				<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">LLM-as-Judge</h3>
-				<label class="flex items-center gap-2 cursor-pointer text-sm">
-					<input type="checkbox" class="accent-accent w-4 h-4" bind:checked={judgeEnabled} />
-					<span>Enable judge scoring</span>
-				</label>
-				{#if judgeEnabled}
-					<div class="mt-3 flex flex-col fade-in">
-						<div class="mb-3">
-							<label class="label" for="judge-model">Judge Model</label>
-							<input id="judge-model" class="input" bind:value={judgeModel} placeholder="e.g. openai/gpt-4o" />
-						</div>
-						<div>
-							<label class="label" for="judge-criteria">Criteria (comma-separated)</label>
-							<input id="judge-criteria" class="input" bind:value={judgeCriteria} placeholder="e.g. accuracy, coherence, helpfulness" />
+				<button
+					type="button"
+					class="text-sm text-text-muted hover:text-text-default flex items-center gap-1.5 transition-colors"
+					onclick={() => (advanced = !advanced)}
+				>
+					<span class="inline-block transition-transform" style:transform={advanced ? 'rotate(90deg)' : 'rotate(0deg)'}>▸</span>
+					Advanced
+				</button>
+			</div>
+
+			{#if advanced}
+				<div class="fade-in">
+					<div class="mb-6 pb-6 border-b border-border">
+						<label class="label" for="suite-desc">Description</label>
+						<textarea id="suite-desc" class="input" bind:value={description} placeholder="Brief description of the suite..." rows="2"></textarea>
+					</div>
+
+					<div class="mb-6 pb-6 border-b border-border">
+						<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">Configuration</h3>
+						<div class="grid grid-cols-2 gap-3">
+							<div class="mb-3">
+								<label class="label" for="cfg-temp">Temperature</label>
+								<input id="cfg-temp" type="number" class="input mono" bind:value={temperature} min="0" max="2" step="0.1" />
+							</div>
+							<div class="mb-3">
+								<label class="label" for="cfg-tokens">Max Tokens</label>
+								<input id="cfg-tokens" type="number" class="input mono" bind:value={maxTokens} min="1" max="32768" />
+							</div>
+							<div class="mb-3">
+								<label class="label" for="cfg-iter">Iterations</label>
+								<input id="cfg-iter" type="number" class="input mono" bind:value={iterations} min="1" max="100" />
+							</div>
+							<div class="mb-3">
+								<label class="label" for="cfg-conc" title="How many model calls run in parallel">Concurrent requests</label>
+								<input id="cfg-conc" type="number" class="input mono" bind:value={concurrency} min="1" max="20" title="How many model calls run in parallel" />
+							</div>
 						</div>
 					</div>
-				{/if}
-			</div>
+
+					<div class="mb-4">
+						<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">LLM-as-Judge</h3>
+						<label class="flex items-center gap-2 cursor-pointer text-sm">
+							<input type="checkbox" class="accent-accent w-4 h-4" bind:checked={judgeEnabled} />
+							<span>Enable judge scoring</span>
+						</label>
+						{#if judgeEnabled}
+							<div class="mt-3 flex flex-col fade-in">
+								<div class="mb-3">
+									<label class="label" for="judge-model">Judge Model</label>
+									<input id="judge-model" class="input" bind:value={judgeModel} placeholder="e.g. openai/gpt-4o" />
+								</div>
+								<div>
+									<label class="label" for="judge-criteria">Criteria (comma-separated)</label>
+									<input id="judge-criteria" class="input" bind:value={judgeCriteria} placeholder="e.g. accuracy, coherence, helpfulness" />
+								</div>
+							</div>
+						{/if}
+					</div>
+				</div>
+			{/if}
 
 			<div class="flex justify-end gap-2 pt-4 border-t border-border">
 				<button type="button" class="btn" onclick={() => { resetForm(); showForm = false; }}>Cancel</button>

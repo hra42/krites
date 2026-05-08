@@ -3,14 +3,15 @@
 
 	interface Props {
 		prompts: (Omit<Prompt, 'id'> & { id?: string })[];
+		advanced?: boolean;
 	}
 
-	let { prompts = $bindable() }: Props = $props();
+	let { prompts = $bindable(), advanced = false }: Props = $props();
 
 	function addPrompt() {
 		prompts = [
 			...prompts,
-			{ name: '', system_message: '', user_message: '', expected_output: '', category: '' }
+			{ name: '', system_message: '', user_message: '', expected_output: '' }
 		];
 	}
 
@@ -26,37 +27,37 @@
 				<span class="text-base font-semibold text-accent">Prompt {i + 1}</span>
 				{#if prompts.length > 1}
 					<button
+						type="button"
 						class="w-6 h-6 border border-border rounded-[--radius-sm] bg-transparent text-text-muted text-base flex items-center justify-center transition-all duration-150 hover:border-error hover:text-error"
 						onclick={() => removePrompt(i)}>&times;</button>
 				{/if}
 			</div>
 
-			<div class="mb-3">
-				<label class="label" for="prompt-name-{i}">Name</label>
-				<input id="prompt-name-{i}" class="input" bind:value={prompt.name} placeholder="e.g. Summarization" />
-			</div>
+			{#if advanced}
+				<div class="mb-3">
+					<label class="label" for="prompt-name-{i}">Name</label>
+					<input id="prompt-name-{i}" class="input" bind:value={prompt.name} placeholder="e.g. Summarization" />
+				</div>
 
-			<div class="mb-3">
-				<label class="label" for="prompt-system-{i}">System Message</label>
-				<textarea id="prompt-system-{i}" class="input" bind:value={prompt.system_message} placeholder="Optional system message..." rows="2"></textarea>
-			</div>
+				<div class="mb-3">
+					<label class="label" for="prompt-system-{i}">System Message</label>
+					<textarea id="prompt-system-{i}" class="input" bind:value={prompt.system_message} placeholder="Optional system message..." rows="2"></textarea>
+				</div>
+			{/if}
 
-			<div class="mb-3">
+			<div class={advanced ? 'mb-3' : ''}>
 				<label class="label" for="prompt-user-{i}">User Message *</label>
 				<textarea id="prompt-user-{i}" class="input" bind:value={prompt.user_message} placeholder="The message to the model..." rows="3"></textarea>
 			</div>
 
-			<div class="mb-3">
-				<label class="label" for="prompt-expected-{i}">Expected Response</label>
-				<textarea id="prompt-expected-{i}" class="input" bind:value={prompt.expected_output} placeholder="Optional: Expected output for judge scoring..." rows="2"></textarea>
-			</div>
-
-			<div>
-				<label class="label" for="prompt-category-{i}">Category</label>
-				<input id="prompt-category-{i}" class="input" bind:value={prompt.category} placeholder="e.g. reasoning, coding, creative" />
-			</div>
+			{#if advanced}
+				<div>
+					<label class="label" for="prompt-expected-{i}">Expected Response</label>
+					<textarea id="prompt-expected-{i}" class="input" bind:value={prompt.expected_output} placeholder="Optional: Expected output for judge scoring..." rows="2"></textarea>
+				</div>
+			{/if}
 		</div>
 	{/each}
 
-	<button class="btn self-start" onclick={addPrompt}>+ Add Prompt</button>
+	<button type="button" class="btn self-start" onclick={addPrompt}>+ Add Prompt</button>
 </div>
