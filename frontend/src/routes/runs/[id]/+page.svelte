@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, mount, unmount, tick } from 'svelte';
 	import * as api from '$lib/api/client';
 	import { exportRunUrl } from '$lib/api/client';
 	import type { Run, Result, ModelSummary } from '$lib/types';
@@ -10,11 +10,14 @@
 	import JudgeRadarChart from '$lib/components/charts/JudgeRadarChart.svelte';
 	import CostChart from '$lib/components/charts/CostChart.svelte';
 	import IterationLineChart from '$lib/components/charts/IterationLineChart.svelte';
+	import RunPdfReport from '$lib/components/RunPdfReport.svelte';
+	import { toastInfo, toastSuccess, toastError } from '$lib/stores/toast';
 
 	let { data } = $props();
 	let run = $state<Run | null>(null);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+	let exportingPdf = $state(false);
 
 	onMount(async () => {
 		try {
@@ -82,6 +85,58 @@
 	const hasJudge = $derived(run?.config.judge_enabled && run?.config.judge_criteria?.length);
 	const criteria = $derived(run?.config.judge_criteria ?? []);
 	const models = $derived(run?.results ? [...new Set(run.results.map((r) => r.model))] : []);
+
+	async function exportPdf() {
+		if (!run || exportingPdf) return;
+		exportingPdf = true;
+		toastInfo('Generating PDF…');
+
+		const host = document.createElement('div');
+		host.style.position = 'fixed';
+		host.style.left = '-10000px';
+		host.style.top = '0';
+		host.style.width = '794px';
+		host.style.background = '#ffffff';
+		document.body.appendChild(host);
+
+		let component: ReturnType<typeof mount> | null = null;
+		try {
+			component = mount(RunPdfReport, { target: host, props: { run } });
+			// Allow charts (layerchart/d3) to render before rasterizing.
+			await tick();
+			await new Promise((r) => setTimeout(r, 600));
+
+			const html2pdf = (await import('html2pdf.js')).default;
+			const safeName = run.suite_name.replace(/[^a-z0-9-_]+/gi, '_');
+			await html2pdf()
+				.from(host.firstElementChild as HTMLElement)
+				.set({
+					filename: `${safeName}-${run.id}.pdf`,
+					// [top, left, bottom, right] in mm — applied on every page by html2pdf.
+					margin: [15, 12, 18, 12],
+					image: { type: 'jpeg', quality: 0.98 },
+					html2canvas: {
+						scale: 2,
+						useCORS: true,
+						backgroundColor: '#ffffff',
+						letterRendering: true,
+						logging: false,
+						removeContainer: true
+					},
+					jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+					pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.chart-card', '.kpi', '.response-head'] }
+				})
+				.save();
+			toastSuccess('PDF downloaded');
+		} catch (e) {
+			console.error(e);
+			toastError(e instanceof Error ? e.message : 'PDF export failed');
+		} finally {
+			if (component) unmount(component);
+			host.remove();
+			exportingPdf = false;
+		}
+	}
 </script>
 
 <div>
@@ -101,6 +156,14 @@
 				{#if run.status === 'complete' || run.status === 'failed'}
 					<a href={exportRunUrl(run.id, 'csv')} download class="text-xs px-3 py-1 rounded-[6px] bg-bg-elevated border border-border text-text-muted no-underline transition-all duration-150 hover:border-accent hover:text-accent">CSV</a>
 					<a href={exportRunUrl(run.id, 'json')} download class="text-xs px-3 py-1 rounded-[6px] bg-bg-elevated border border-border text-text-muted no-underline transition-all duration-150 hover:border-accent hover:text-accent">JSON</a>
+					<button
+						type="button"
+						onclick={exportPdf}
+						disabled={exportingPdf}
+						class="text-xs px-3 py-1 rounded-[6px] bg-bg-elevated border border-border text-text-muted transition-all duration-150 hover:border-accent hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						{exportingPdf ? 'Generating…' : 'PDF'}
+					</button>
 				{/if}
 				<StatusBadge status={run.status} />
 			</div>
@@ -281,54 +344,57 @@
 				</div>
 			</section>
 
-			<!-- All results -->
+			<!-- Responses -->
 			<section class="mb-8">
-				<h2 class="text-lg text-text-muted uppercase tracking-wide mb-3">All Results</h2>
-				<div class="overflow-x-auto">
-					<table class="w-full border-collapse">
-						<thead>
-							<tr>
-								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Model</th>
-								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Prompt</th>
-								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">#</th>
-								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Status</th>
-								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Latency</th>
-								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">tok/s</th>
-								<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Tokens</th>
-								{#if hasJudge}
-									<th class="text-left text-sm text-text-dim uppercase tracking-wide px-3 py-2 border-b border-border">Judge</th>
-								{/if}
-							</tr>
-						</thead>
-						<tbody>
-							{#each run.results as result}
-								<tr class="hover:bg-bg-elevated {result.status !== 'success' ? 'opacity-60' : ''}">
-									<td class="px-3 py-2.5 border-b border-border text-sm max-w-30 overflow-hidden text-ellipsis mono">{result.model.split('/').pop()}</td>
-									<td class="px-3 py-2.5 border-b border-border text-[15px]">{result.prompt_name || '-'}</td>
-									<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{result.iteration}</td>
-									<td class="px-3 py-2.5 border-b border-border">
-										<span class="inline-block w-2 h-2 rounded-full {statusDotColor[result.status] || 'bg-text-muted'}"></span>
-									</td>
-									<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{result.metrics.total_latency_ms.toFixed(0)}ms</td>
-									<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{result.metrics.tokens_per_second.toFixed(1)}</td>
-									<td class="px-3 py-2.5 border-b border-border text-[15px] mono">{result.metrics.completion_tokens}</td>
-									{#if hasJudge}
-										<td class="px-3 py-2.5 border-b border-border">
-											{#if result.judge_scores?.length}
-												<div class="flex flex-wrap gap-1">
-													{#each result.judge_scores as js}
-														<JudgeScoreBadge criterion={js.criterion} score={js.score} />
-													{/each}
-												</div>
-											{:else}
-												<span class="text-text-dim">-</span>
+				<h2 class="text-lg text-text-muted uppercase tracking-wide mb-3">Responses</h2>
+				<div class="flex flex-col gap-4">
+					{#each run.results as result}
+						<article class="card p-5">
+							<header class="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-border">
+								<div class="flex items-center gap-2 flex-wrap">
+									<ModelChip model={result.model} />
+									<span class="text-sm text-text-muted">·</span>
+									<span class="text-[15px]">{result.prompt_name || result.prompt_id}</span>
+									<span class="text-sm text-text-muted">·</span>
+									<span class="text-sm text-text-muted mono">iter {result.iteration}</span>
+								</div>
+								<div class="flex items-center gap-2 text-sm text-text-muted mono flex-wrap justify-end">
+									<span class="inline-block w-2 h-2 rounded-full {statusDotColor[result.status] || 'bg-text-muted'}"></span>
+									<span class="uppercase tracking-wide text-xs">{result.status}</span>
+									<span class="text-text-dim">·</span>
+									<span title="time to first byte">TTFB {result.metrics.ttfb_ms.toFixed(0)}ms</span>
+									<span class="text-text-dim">·</span>
+									<span>{result.metrics.total_latency_ms.toFixed(0)}ms</span>
+									<span class="text-text-dim">·</span>
+									<span>{result.metrics.tokens_per_second.toFixed(1)} tok/s</span>
+									<span class="text-text-dim">·</span>
+									<span>{result.metrics.completion_tokens} tok</span>
+									<span class="text-text-dim">·</span>
+									<span>${result.metrics.estimated_cost.toFixed(4)}</span>
+								</div>
+							</header>
+							{#if result.status !== 'success'}
+								<pre class="bg-bg-elevated border border-error/40 border-l-4 border-l-error rounded-[--radius] p-3 text-sm text-error font-mono whitespace-pre-wrap break-words m-0">{result.error || '(no error message)'}</pre>
+							{:else}
+								<pre class="bg-bg-elevated border border-border border-l-4 border-l-accent rounded-[--radius] p-3 text-sm font-mono whitespace-pre-wrap break-words m-0">{result.response || '(empty response)'}</pre>
+							{/if}
+							{#if result.judge_scores?.length}
+								<div class="mt-3 pt-3 border-t border-border flex flex-col gap-2">
+									{#each result.judge_scores as js}
+										<div>
+											<div class="flex items-baseline justify-between mb-0.5">
+												<span class="text-sm font-semibold capitalize">{js.criterion}</span>
+												<span class="mono text-base text-accent font-semibold">{js.score}<span class="text-text-dim font-normal">/10</span></span>
+											</div>
+											{#if js.explanation}
+												<p class="text-sm text-text-muted m-0 leading-relaxed">{js.explanation}</p>
 											{/if}
-										</td>
-									{/if}
-								</tr>
-							{/each}
-						</tbody>
-					</table>
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</article>
+					{/each}
 				</div>
 			</section>
 		{:else}

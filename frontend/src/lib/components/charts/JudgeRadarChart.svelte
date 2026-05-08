@@ -5,9 +5,13 @@
 	interface Props {
 		modelSummaries: ModelSummary[];
 		criteria: string[];
+		pdfMode?: boolean;
 	}
 
-	let { modelSummaries, criteria }: Props = $props();
+	let { modelSummaries, criteria, pdfMode = false }: Props = $props();
+
+	const gridStroke = $derived(pdfMode ? '#d8d8d8' : '#2a2830');
+	const labelFill = $derived(pdfMode ? '#6a6a6a' : '#8b8894');
 
 	const hasScores = $derived(
 		modelSummaries.some((m) => m.avg_judge_scores && Object.keys(m.avg_judge_scores).length > 0)
@@ -64,14 +68,14 @@
 		<svg viewBox="0 0 300 300" class="w-full max-w-[300px] flex-1 min-h-0">
 			<!-- Grid levels -->
 			{#each levels as level}
-				<polygon points={gridPolygon(level)} fill="none" stroke="#2a2830" stroke-width="1" />
+				<polygon points={gridPolygon(level)} fill="none" stroke={gridStroke} stroke-width="1" />
 			{/each}
 
 			<!-- Axis lines -->
 			{#each criteria as _, i}
 				{@const angle = angleFor(i, criteria.length)}
 				{@const end = pointOnCircle(angle, radius)}
-				<line x1={cx} y1={cy} x2={end.x} y2={end.y} stroke="#2a2830" stroke-width="1" />
+				<line x1={cx} y1={cy} x2={end.x} y2={end.y} stroke={gridStroke} stroke-width="1" />
 			{/each}
 
 			<!-- Data polygons -->
@@ -101,9 +105,9 @@
 					y={p.y}
 					text-anchor="middle"
 					dominant-baseline="central"
-					fill="#8b8894"
+					fill={labelFill}
 					font-size="13"
-					font-family="'JetBrains Mono', monospace"
+					font-family={pdfMode ? "'Outfit', sans-serif" : "'JetBrains Mono', monospace"}
 				>
 					{c}
 				</text>

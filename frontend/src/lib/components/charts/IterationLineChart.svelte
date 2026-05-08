@@ -6,9 +6,10 @@
 	interface Props {
 		results: Result[];
 		models: string[];
+		pdfMode?: boolean;
 	}
 
-	let { results, models }: Props = $props();
+	let { results, models, pdfMode = false }: Props = $props();
 
 	const chartData = $derived.by(() => {
 		const successful = results.filter((r) => r.status === 'success');
@@ -47,7 +48,7 @@
 		<LineChart
 			data={chartData}
 			x="iteration"
-			padding={{ left: 56, top: 8, bottom: 36, right: 16 }}
+			padding={{ left: 60, top: 12, bottom: pdfMode ? 60 : 36, right: 20 }}
 			{series}
 			legend
 			points

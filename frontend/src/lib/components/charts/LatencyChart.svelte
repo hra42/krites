@@ -5,9 +5,10 @@
 
 	interface Props {
 		modelSummaries: ModelSummary[];
+		pdfMode?: boolean;
 	}
 
-	let { modelSummaries }: Props = $props();
+	let { modelSummaries, pdfMode = false }: Props = $props();
 
 	const chartData = $derived(
 		modelSummaries.map((m) => ({
@@ -17,13 +18,26 @@
 			p95: m.p95_latency_ms
 		}))
 	);
+
+	const xAxisProps = $derived(
+		pdfMode
+			? {
+					tickLabelProps: {
+						rotate: -28,
+						textAnchor: 'end' as const,
+						dx: -4,
+						dy: 4
+					}
+				}
+			: undefined
+	);
 </script>
 
 <div class="relative w-full h-full">
 	<BarChart
 		data={chartData}
 		x="model"
-		padding={{ left: 56, top: 8, bottom: 36, right: 16 }}
+		padding={{ left: 60, top: 12, bottom: pdfMode ? 80 : 36, right: 20 }}
 		seriesLayout="group"
 		series={[
 			{ key: 'avg', label: 'Avg Latency', color: MODEL_COLORS[0] },
@@ -32,7 +46,8 @@
 		]}
 		legend
 		props={{
-			yAxis: { format: (d: number) => `${d.toFixed(0)}ms` }
+			yAxis: { format: (d: number) => `${d.toFixed(0)}ms` },
+			xAxis: xAxisProps
 		}}
 	/>
 </div>

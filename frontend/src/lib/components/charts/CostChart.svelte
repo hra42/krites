@@ -4,9 +4,10 @@
 
 	interface Props {
 		modelSummaries: ModelSummary[];
+		pdfMode?: boolean;
 	}
 
-	let { modelSummaries }: Props = $props();
+	let { modelSummaries, pdfMode = false }: Props = $props();
 
 	const chartData = $derived(
 		modelSummaries.map((m) => ({
@@ -22,7 +23,7 @@
 		x="total_cost"
 		y="model"
 		orientation="horizontal"
-		padding={{ left: 140, top: 4, bottom: 36, right: 16 }}
+		padding={{ left: pdfMode ? 180 : 140, top: 8, bottom: 36, right: 24 }}
 		series={[{ key: 'total_cost', label: 'Total Cost', color: '#a78bfa' }]}
 		props={{
 			xAxis: { format: (d: number) => `$${d.toFixed(4)}` }
