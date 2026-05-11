@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { suites, loading, error, loadSuites, createNewSuite } from '$lib/stores/benchmark';
-	import type { Prompt } from '$lib/types';
+	import { suites, loading, error, loadSuites, createNewSuite, duplicateSuite } from '$lib/stores/benchmark';
+	import type { Prompt, SuiteSummary } from '$lib/types';
 	import SuiteCard from '$lib/components/SuiteCard.svelte';
 	import ModelPicker from '$lib/components/ModelPicker.svelte';
 	import PromptEditor from '$lib/components/PromptEditor.svelte';
+	import DuplicateSuiteModal from '$lib/components/DuplicateSuiteModal.svelte';
 
 	let showForm = $state(false);
 	let advanced = $state(false);
@@ -21,10 +22,28 @@
 	let judgeEnabled = $state(false);
 	let judgeModel = $state('');
 	let judgeCriteria = $state('');
+	let keyword = $state('');
+
+	let duplicateTarget = $state<SuiteSummary | null>(null);
+	let duplicating = $state(false);
 
 	onMount(() => {
 		loadSuites();
 	});
+
+	function openDuplicate(suite: SuiteSummary) {
+		duplicateTarget = suite;
+	}
+
+	async function confirmDuplicate(newName: string) {
+		if (!duplicateTarget) return;
+		duplicating = true;
+		const created = await duplicateSuite(duplicateTarget.id, newName);
+		duplicating = false;
+		if (created) {
+			duplicateTarget = null;
+		}
+	}
 
 	function resetForm() {
 		advanced = false;
@@ -39,6 +58,7 @@
 		judgeEnabled = false;
 		judgeModel = '';
 		judgeCriteria = '';
+		keyword = '';
 	}
 
 	async function handleSubmit() {
@@ -64,7 +84,8 @@
 				concurrency,
 				judge_enabled: judgeEnabled,
 				...(judgeEnabled && judgeModel ? { judge_model: judgeModel } : {}),
-				...(judgeEnabled && criteria.length > 0 ? { judge_criteria: criteria } : {})
+				...(judgeEnabled && criteria.length > 0 ? { judge_criteria: criteria } : {}),
+				...(keyword.trim() ? { keyword: keyword.trim() } : {})
 			}
 		});
 
@@ -168,6 +189,13 @@
 							</div>
 						{/if}
 					</div>
+
+					<div class="mb-4">
+						<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">Keyword Tracking</h3>
+						<label class="label" for="cfg-keyword">Keyword (case-insensitive)</label>
+						<input id="cfg-keyword" class="input" bind:value={keyword} placeholder="e.g. seventhings" />
+						<p class="text-xs text-text-dim mt-1">Counts occurrences of this keyword in each response.</p>
+					</div>
 				</div>
 			{/if}
 
@@ -194,8 +222,16 @@
 	{:else}
 		<div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
 			{#each $suites as suite}
-				<SuiteCard {suite} />
+				<SuiteCard {suite} onduplicate={openDuplicate} />
 			{/each}
 		</div>
 	{/if}
+
+	<DuplicateSuiteModal
+		open={duplicateTarget !== null}
+		suiteName={duplicateTarget?.name ?? ''}
+		busy={duplicating}
+		onclose={() => (duplicateTarget = null)}
+		onconfirm={confirmDuplicate}
+	/>
 </div>

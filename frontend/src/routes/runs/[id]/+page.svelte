@@ -82,6 +82,20 @@
 		timeout: 'bg-warning'
 	};
 
+	function countKeyword(text: string, keyword: string): number {
+		if (!keyword || !text) return 0;
+		const needle = keyword.toLowerCase();
+		const hay = text.toLowerCase();
+		let count = 0;
+		let idx = 0;
+		while ((idx = hay.indexOf(needle, idx)) !== -1) {
+			count++;
+			idx += needle.length;
+		}
+		return count;
+	}
+
+	const keyword = $derived(run?.config.keyword?.trim() ?? '');
 	const hasSummary = $derived(run?.summary && run.summary.models.length > 0);
 	const hasJudge = $derived(run?.config.judge_enabled && run?.config.judge_criteria?.length);
 	const criteria = $derived(run?.config.judge_criteria ?? []);
@@ -397,6 +411,14 @@
 							{#if result.status !== 'success'}
 								<pre class="bg-bg-elevated border border-error/40 border-l-4 border-l-error rounded-[--radius] p-3 text-sm text-error font-mono whitespace-pre-wrap break-words m-0">{result.error || '(no error message)'}</pre>
 							{:else if result.response}
+								{#if keyword}
+									{@const kc = countKeyword(result.response, keyword)}
+									<div class="mb-2 text-sm text-text-muted">
+										Keyword <span class="mono text-accent">"{keyword}"</span>:
+										<span class="mono font-semibold {kc > 0 ? 'text-accent' : 'text-text-dim'}">{kc}</span>
+										<span class="text-text-dim">{kc === 1 ? 'occurrence' : 'occurrences'}</span>
+									</div>
+								{/if}
 								<div class="markdown bg-bg-elevated border border-border border-l-4 border-l-accent rounded-[--radius] p-4">
 									{@html renderMarkdown(result.response)}
 								</div>

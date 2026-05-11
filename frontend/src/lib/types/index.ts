@@ -17,6 +17,7 @@ export interface RunConfig {
 	judge_model?: string;
 	judge_criteria?: string[];
 	timeout_seconds: number;
+	keyword?: string;
 }
 
 export interface Suite {

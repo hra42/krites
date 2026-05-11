@@ -16,6 +16,20 @@
 	const hasJudge = $derived(!!run.config.judge_enabled && (run.config.judge_criteria?.length ?? 0) > 0);
 	const criteria = $derived(run.config.judge_criteria ?? []);
 	const models = $derived(run.results ? [...new Set(run.results.map((r) => r.model))] : []);
+	const keyword = $derived(run.config.keyword?.trim() ?? '');
+
+	function countKeyword(text: string, kw: string): number {
+		if (!kw || !text) return 0;
+		const needle = kw.toLowerCase();
+		const hay = text.toLowerCase();
+		let count = 0;
+		let idx = 0;
+		while ((idx = hay.indexOf(needle, idx)) !== -1) {
+			count++;
+			idx += needle.length;
+		}
+		return count;
+	}
 
 	const totals = $derived.by(() => {
 		const results = run.results ?? [];
@@ -298,6 +312,12 @@
 					{#if r.status !== 'success'}
 						<pre class="response-body error-body">{r.error || '(no error message)'}</pre>
 					{:else if r.response}
+						{#if keyword}
+							<div class="keyword-count">
+								Keyword "<span class="mono">{keyword}</span>":
+								<strong class="mono">{countKeyword(r.response, keyword)}</strong>
+							</div>
+						{/if}
 						<div class="response-body markdown-body">
 							{@html renderMarkdown(r.response)}
 						</div>
@@ -816,6 +836,15 @@
 
 	.response-meta .sep {
 		color: #ccc;
+	}
+
+	.keyword-count {
+		font-size: 10px;
+		color: #555;
+		margin: 0 0 6px 0;
+	}
+	.keyword-count strong {
+		color: #7c3aed;
 	}
 
 	.response-body {

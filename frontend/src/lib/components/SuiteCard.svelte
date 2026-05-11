@@ -3,9 +3,10 @@
 
 	interface Props {
 		suite: SuiteSummary;
+		onduplicate?: (suite: SuiteSummary) => void;
 	}
 
-	let { suite }: Props = $props();
+	let { suite, onduplicate }: Props = $props();
 
 	function formatDate(iso: string): string {
 		return new Date(iso).toLocaleDateString('en-US', {
@@ -14,10 +15,27 @@
 			year: 'numeric'
 		});
 	}
+
+	function handleDuplicate(e: MouseEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		onduplicate?.(suite);
+	}
 </script>
 
-<a href="/suites/{suite.id}" class="block bg-bg-card border border-border rounded-[--radius-lg] p-5 transition-all duration-150 text-text hover:border-accent hover:-translate-y-px fade-in">
-	<div class="mb-2">
+<a href="/suites/{suite.id}" class="relative block bg-bg-card border border-border rounded-[--radius-lg] p-5 transition-all duration-150 text-text hover:border-accent hover:-translate-y-px fade-in">
+	{#if onduplicate}
+		<button
+			type="button"
+			onclick={handleDuplicate}
+			class="absolute top-3 right-3 px-2 py-1 text-xs text-text-muted hover:text-accent hover:bg-bg-elevated rounded-[--radius-sm] transition-colors mono"
+			title="Duplicate suite"
+			aria-label="Duplicate suite"
+		>
+			Copy
+		</button>
+	{/if}
+	<div class="mb-2 pr-12">
 		<h3 class="text-lg font-semibold">{suite.name}</h3>
 	</div>
 	{#if suite.description}

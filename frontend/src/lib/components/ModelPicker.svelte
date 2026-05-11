@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import Fuse from 'fuse.js';
 	import * as api from '$lib/api/client';
 	import type { OpenRouterModel } from '$lib/types';
 	import ModelChip from './ModelChip.svelte';
@@ -40,6 +41,16 @@
 		'mistralai/mistral-small-2603'
 	];
 
+	const FUSE_OPTIONS = {
+		keys: [
+			{ name: 'name', weight: 2 },
+			{ name: 'id', weight: 1 }
+		],
+		threshold: 0.4,
+		ignoreLocation: true,
+		shouldSort: true
+	};
+
 	let allModels = $state<OpenRouterModel[]>([]);
 	let loadingModels = $state(true);
 	let loadError = $state('');
@@ -68,6 +79,13 @@
 		return out;
 	});
 
+	let filteredFeatured = $derived(() => {
+		const list = featuredModels();
+		if (!search) return list;
+		const fuse = new Fuse(list, FUSE_OPTIONS);
+		return fuse.search(search).map((r) => r.item);
+	});
+
 	let providers = $derived(() => {
 		const set = new Set<string>();
 		for (const m of allModels) {
@@ -84,14 +102,12 @@
 			list = list.filter((m) => m.id.startsWith(providerFilter + '/'));
 		}
 
-		if (search) {
-			const q = search.toLowerCase();
-			list = list.filter(
-				(m) => m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q)
-			);
-		}
-
 		list = list.filter((m) => !selected.includes(m.id));
+
+		if (search) {
+			const fuse = new Fuse(list, FUSE_OPTIONS);
+			return fuse.search(search).map((r) => r.item);
+		}
 
 		const sorted = [...list];
 		sorted.sort((a, b) => {
@@ -190,13 +206,23 @@
 		{:else if loadError}
 			<p class="py-5 text-center text-error text-base">{loadError}</p>
 		{:else}
+			<div class="px-3 py-2.5 border-b border-border">
+				<input
+					class="input"
+					bind:value={search}
+					placeholder="Fuzzy search by name or ID..."
+				/>
+			</div>
+
 			<div class="px-3 py-2 border-b border-border flex justify-between items-center">
-				<span class="text-sm text-text-muted uppercase tracking-wide font-semibold">Featured</span>
+				<span class="text-sm text-text-muted uppercase tracking-wide font-semibold">
+					Featured{#if search}<span class="ml-1 text-text-dim normal-case font-normal">({filteredFeatured().length} {filteredFeatured().length === 1 ? 'match' : 'matches'})</span>{/if}
+				</span>
 				<span class="text-sm text-text-dim mono">{featuredModels().length} shown · {selected.length} selected</span>
 			</div>
 
 			<div class="max-h-80 overflow-y-auto">
-				{#each featuredModels() as model (model.id)}
+				{#each filteredFeatured() as model (model.id)}
 					<button
 						type="button"
 						class="grid grid-cols-[1fr_80px_100px_32px] gap-2 items-center w-full py-2 px-3 border-none border-b border-border bg-transparent text-text cursor-pointer text-left transition-[background] duration-100 last:border-b-0 hover:bg-accent-bg"
@@ -211,8 +237,12 @@
 						<span class="text-lg text-accent text-center font-semibold">+</span>
 					</button>
 				{/each}
-				{#if featuredModels().length === 0}
-					<p class="py-4 text-center text-text-muted text-sm">All featured models are selected.</p>
+				{#if filteredFeatured().length === 0}
+					{#if search}
+						<p class="py-4 text-center text-text-muted text-sm">No featured matches — see all models below.</p>
+					{:else}
+						<p class="py-4 text-center text-text-muted text-sm">All featured models are selected.</p>
+					{/if}
 				{/if}
 			</div>
 
@@ -235,15 +265,10 @@
 				</button>
 			</div>
 
-			{#if showAll}
+			{#if showAll || search.length > 0}
 				<div class="border-t border-border fade-in">
 					<div class="flex gap-2 px-3 py-2.5 border-b border-border">
-						<input
-							class="input flex-1"
-							bind:value={search}
-							placeholder="Search by name or ID..."
-						/>
-						<select class="input w-40 cursor-pointer" bind:value={providerFilter}>
+						<select class="input w-full cursor-pointer" bind:value={providerFilter}>
 							<option value="">All Providers</option>
 							{#each providers() as provider}
 								<option value={provider}>{provider}</option>

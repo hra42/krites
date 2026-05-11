@@ -197,6 +197,63 @@ func (h *Handler) HandleDeleteSuite(c fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
+// DuplicateSuiteRequest is the optional body for duplicating a suite.
+type DuplicateSuiteRequest struct {
+	Name string `json:"name"`
+}
+
+// HandleDuplicateSuite handles POST /benchmarks/suites/:id/duplicate.
+func (h *Handler) HandleDuplicateSuite(c fiber.Ctx) error {
+	id := c.Params("id")
+
+	original, err := h.store.GetSuite(id)
+	if err != nil {
+		if errors.Is(err, ErrSuiteNotFound) {
+			return &middleware.AppError{
+				Status:  fiber.StatusNotFound,
+				Code:    "SUITE_NOT_FOUND",
+				Message: fmt.Sprintf("suite %q not found", id),
+			}
+		}
+		return middleware.NewInternalError(err.Error())
+	}
+
+	var req DuplicateSuiteRequest
+	// Body is optional — ignore bind errors and fall back to default name.
+	_ = c.Bind().JSON(&req)
+
+	name := req.Name
+	if name == "" {
+		name = original.Name + " (Copy)"
+	}
+
+	now := time.Now()
+	clone := &Suite{
+		ID:          uuid.New().String(),
+		Name:        name,
+		Description: original.Description,
+		Models:      append([]string(nil), original.Models...),
+		Config:      original.Config,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	if original.Config.JudgeCriteria != nil {
+		clone.Config.JudgeCriteria = append([]string(nil), original.Config.JudgeCriteria...)
+	}
+
+	clone.Prompts = make([]Prompt, len(original.Prompts))
+	for i, p := range original.Prompts {
+		p.ID = uuid.New().String()
+		clone.Prompts[i] = p
+	}
+
+	if err := h.store.CreateSuite(clone); err != nil {
+		return middleware.NewInternalError(err.Error())
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(clone)
+}
+
 // HandleStartRun handles POST /benchmarks/suites/:id/run.
 func (h *Handler) HandleStartRun(c fiber.Ctx) error {
 	id := c.Params("id")
@@ -475,6 +532,7 @@ func (h *Handler) RegisterRoutes(app *fiber.App) {
 	suites.Put("/:id", h.HandleUpdateSuite)
 	suites.Delete("/:id", h.HandleDeleteSuite)
 	suites.Post("/:id/run", h.HandleStartRun)
+	suites.Post("/:id/duplicate", h.HandleDuplicateSuite)
 
 	runs := benchmarks.Group("/runs")
 	runs.Get("/", h.HandleListRuns)

@@ -70,6 +70,24 @@ export async function editSuite(id: string, data: UpdateSuiteRequest): Promise<S
 	}
 }
 
+export async function duplicateSuite(id: string, name?: string): Promise<Suite | null> {
+	loading.set(true);
+	error.set(null);
+	try {
+		const suite = await api.duplicateSuite(id, name);
+		toastSuccess('Suite duplicated');
+		await loadSuites();
+		return suite;
+	} catch (e) {
+		const msg = e instanceof Error ? e.message : 'Unknown error';
+		error.set(msg);
+		toastError(msg);
+		return null;
+	} finally {
+		loading.set(false);
+	}
+}
+
 export async function removeSuite(id: string) {
 	error.set(null);
 	try {

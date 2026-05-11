@@ -55,6 +55,13 @@ export function deleteSuite(id: string): Promise<void> {
 	return request(`/benchmarks/suites/${id}`, { method: 'DELETE' });
 }
 
+export function duplicateSuite(id: string, name?: string): Promise<Suite> {
+	return request(`/benchmarks/suites/${id}/duplicate`, {
+		method: 'POST',
+		body: JSON.stringify({ name: name ?? '' })
+	});
+}
+
 export function listRuns(): Promise<RunSummary[]> {
 	return request('/benchmarks/runs/');
 }

@@ -31,6 +31,7 @@ type RunConfig struct {
 	JudgeModel     string   `json:"judge_model,omitempty"`
 	JudgeCriteria  []string `json:"judge_criteria,omitempty"`
 	TimeoutSeconds int      `json:"timeout_seconds"`
+	Keyword        string   `json:"keyword,omitempty"`
 }
 
 // DefaultRunConfig returns sensible defaults for a RunConfig.

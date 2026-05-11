@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { currentSuite, loading, error, loadSuite, removeSuite, editSuite } from '$lib/stores/benchmark';
+	import { currentSuite, loading, error, loadSuite, removeSuite, editSuite, duplicateSuite } from '$lib/stores/benchmark';
 	import ModelChip from '$lib/components/ModelChip.svelte';
 	import ModelPicker from '$lib/components/ModelPicker.svelte';
 	import PromptEditor from '$lib/components/PromptEditor.svelte';
+	import DuplicateSuiteModal from '$lib/components/DuplicateSuiteModal.svelte';
 	import { goto } from '$app/navigation';
 	import type { Prompt } from '$lib/types';
 
@@ -22,6 +23,7 @@
 	let editJudgeEnabled = $state(false);
 	let editJudgeModel = $state('');
 	let editJudgeCriteria = $state('');
+	let editKeyword = $state('');
 
 	onMount(() => {
 		loadSuite(data.id);
@@ -46,6 +48,7 @@
 		editJudgeEnabled = $currentSuite.config.judge_enabled;
 		editJudgeModel = $currentSuite.config.judge_model ?? '';
 		editJudgeCriteria = $currentSuite.config.judge_criteria?.join(', ') ?? '';
+		editKeyword = $currentSuite.config.keyword ?? '';
 		editing = true;
 	}
 
@@ -72,7 +75,8 @@
 				concurrency: editConcurrency,
 				judge_enabled: editJudgeEnabled,
 				...(editJudgeEnabled && editJudgeModel ? { judge_model: editJudgeModel } : {}),
-				...(editJudgeEnabled && criteria.length > 0 ? { judge_criteria: criteria } : {})
+				...(editJudgeEnabled && criteria.length > 0 ? { judge_criteria: criteria } : {}),
+				keyword: editKeyword.trim()
 			}
 		});
 		if (result) {
@@ -86,6 +90,20 @@
 		if ($currentSuite) {
 			await removeSuite($currentSuite.id);
 			goto('/suites');
+		}
+	}
+
+	let showDuplicateModal = $state(false);
+	let duplicating = $state(false);
+
+	async function handleDuplicate(newName: string) {
+		if (!$currentSuite) return;
+		duplicating = true;
+		const created = await duplicateSuite($currentSuite.id, newName);
+		duplicating = false;
+		if (created) {
+			showDuplicateModal = false;
+			goto(`/suites/${created.id}`);
 		}
 	}
 </script>
@@ -120,6 +138,7 @@
 					</button>
 				{:else}
 					<button class="btn" onclick={startEditing}>Edit</button>
+					<button class="btn" onclick={() => (showDuplicateModal = true)}>Duplicate</button>
 					<button class="btn btn-primary" onclick={() => goto(`/suites/${$currentSuite.id}/run`)}>Start Benchmark</button>
 					<button class="btn btn-danger" onclick={() => (showDeleteConfirm = true)}>Delete</button>
 				{/if}
@@ -190,6 +209,13 @@
 							</div>
 						</div>
 					{/if}
+				</div>
+
+				<div>
+					<h3 class="text-sm text-text-muted uppercase tracking-wide mb-3">Keyword Tracking</h3>
+					<label class="label" for="edit-keyword">Keyword (case-insensitive)</label>
+					<input id="edit-keyword" class="input" bind:value={editKeyword} placeholder="e.g. seventhings" />
+					<p class="text-xs text-text-dim mt-1">Counts occurrences of this keyword in each response.</p>
 				</div>
 			</form>
 		{:else}
@@ -275,6 +301,11 @@
 						{/if}
 					</div>
 				{/if}
+				{#if $currentSuite.config.keyword}
+					<div class="mt-3 px-4 py-3 bg-bg-card border border-border rounded-[--radius] text-[15px]">
+						<p><strong>Keyword:</strong> <span class="mono">{$currentSuite.config.keyword}</span></p>
+					</div>
+				{/if}
 			</section>
 		{/if}
 	</div>
@@ -293,4 +324,12 @@
 			</div>
 		</div>
 	{/if}
+
+	<DuplicateSuiteModal
+		open={showDuplicateModal}
+		suiteName={$currentSuite.name}
+		busy={duplicating}
+		onclose={() => (showDuplicateModal = false)}
+		onconfirm={handleDuplicate}
+	/>
 {/if}
