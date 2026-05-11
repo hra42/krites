@@ -101,6 +101,28 @@
 	const criteria = $derived(run?.config.judge_criteria ?? []);
 	const models = $derived(run?.results ? [...new Set(run.results.map((r) => r.model))] : []);
 
+	type KeywordCell = { count: number; hasSuccess: boolean };
+	type KeywordRow = { name: string; perModel: Map<string, KeywordCell> };
+
+	const keywordMatrix = $derived.by<KeywordRow[] | null>(() => {
+		if (!keyword || !run?.results) return null;
+		const prompts = new Map<string, KeywordRow>();
+		for (const r of run.results) {
+			let row = prompts.get(r.prompt_id);
+			if (!row) {
+				row = { name: r.prompt_name || r.prompt_id, perModel: new Map() };
+				prompts.set(r.prompt_id, row);
+			}
+			const cell = row.perModel.get(r.model) ?? { count: 0, hasSuccess: false };
+			if (r.status === 'success' && r.response) {
+				cell.count += countKeyword(r.response, keyword);
+				cell.hasSuccess = true;
+			}
+			row.perModel.set(r.model, cell);
+		}
+		return Array.from(prompts.values());
+	});
+
 	async function exportPdf() {
 		if (!run || exportingPdf) return;
 		exportingPdf = true;
@@ -378,6 +400,45 @@
 					{/if}
 				</div>
 			</section>
+
+			{#if keyword && keywordMatrix && keywordMatrix.length > 0}
+				<section class="mb-8">
+					<h2 class="text-lg text-text-muted uppercase tracking-wide mb-3">
+						Keyword summary — <span class="mono text-accent">"{keyword}"</span>
+					</h2>
+					<div class="card p-0 overflow-x-auto">
+						<table class="w-full text-sm border-collapse">
+							<thead>
+								<tr class="text-left text-text-muted">
+									<th class="px-4 py-3 border-b border-border font-normal">Prompt</th>
+									{#each models as m}
+										<th class="px-4 py-3 border-b border-border mono font-normal text-right">{m}</th>
+									{/each}
+								</tr>
+							</thead>
+							<tbody>
+								{#each keywordMatrix as row}
+									<tr class="border-b border-border last:border-0">
+										<td class="px-4 py-2.5">{row.name}</td>
+										{#each models as m}
+											{@const cell = row.perModel.get(m)}
+											<td
+												class="px-4 py-2.5 mono text-right {!cell || !cell.hasSuccess
+													? 'text-text-dim'
+													: cell.count > 0
+														? 'text-accent font-semibold'
+														: 'text-text-dim'}"
+											>
+												{!cell || !cell.hasSuccess ? '—' : cell.count}
+											</td>
+										{/each}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</section>
+			{/if}
 
 			<!-- Responses -->
 			<section class="mb-8">
