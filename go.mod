@@ -3,7 +3,7 @@ module github.com/hra42/krites
 go 1.26
 
 require (
-	github.com/duckdb/duckdb-go/v2 v2.10503.0
+	github.com/duckdb/duckdb-go/v2 v2.10503.1
 	github.com/gofiber/fiber/v3 v3.2.0
 	github.com/google/uuid v1.6.0
 	github.com/hra42/openrouter-go v1.7.0
